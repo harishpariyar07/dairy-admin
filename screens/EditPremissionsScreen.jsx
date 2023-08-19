@@ -1,19 +1,21 @@
-import React, { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Button } from 'react-native-paper'
 import DropDown from 'react-native-paper-dropdown'
-import { useAuth } from '../context/AuthContext'
+import { URL } from '@env'
+import { useNavigation } from '@react-navigation/native'
+import axios from 'axios'
 
 const permissionsOptions = [
   { value: 'Allow', label: 'Allow' },
   { value: 'Not Allow', label: 'Not Allow' },
 ]
 
-const PermissionsScreen = ({ navigation, route }) => {
-  const { onRegister } = useAuth()
+const EditPermissionsScreen = ({ route }) => {
   const { userId, username, mobileNo, contactPerson, address, password, confirmPassword } =
     route.params
 
+  const navigation = useNavigation()
   const [allowAddFarmer, setAllowAddFarmer] = useState('Not Allow')
   const [allowRateChart, setAllowRateChart] = useState('Not Allow')
   const [allowPayment, setAllowPayment] = useState('Not Allow')
@@ -31,26 +33,46 @@ const PermissionsScreen = ({ navigation, route }) => {
     })
   }, [])
 
-  const handleSignUp = async () => {
-    const res = await onRegister({
-      userId,
-      username,
-      password,
-      confirmPassword,
-      mobileNo,
-      contactPerson,
-      address,
-      allowAddFarmer,
-      allowRateChart,
-      allowPayment,
-      allowDues,
-      allowLedger,
-    })
-    if (res && res.error) {
-      alert(res.message)
-    } else {
-      navigation.navigate('HomeScreen')
-      alert('User Registered Successfully')
+  const fetchUserPermissions = async () => {
+    try {
+      if (route.params.username) {
+        const res = await axios.get(`${URL}user/${route.params.username}/permissions`)
+        setAllowAddFarmer(res.data.allowAddFarmer)
+        setAllowRateChart(res.data.allowRateChart)
+        setAllowPayment(res.data.allowPayment)
+        setAllowDues(res.data.allowDues)
+        setAllowLedger(res.data.allowLedger)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    fetchUserPermissions()
+  }, [])
+
+  const updateUser = async () => {
+    try {
+      const res = await axios.put(`${URL}user/${username}`, {
+        userId,
+        username,
+        password,
+        confirmPassword,
+        mobileNo,
+        contactPerson,
+        address,
+        allowAddFarmer,
+        allowRateChart,
+        allowPayment,
+        allowDues,
+        allowLedger,
+      })
+      alert('User updated successfully')
+      navigation.navigate('Users')
+    } catch (err) {
+      alert('Error in updating user')
+      console.log(err)
     }
   }
 
@@ -162,8 +184,13 @@ const PermissionsScreen = ({ navigation, route }) => {
       </View>
 
       <View style={styles.buttons}>
-        <Button mode='contained' style={styles.button} onPress={handleSignUp} buttonColor='#6987d0'>
-          Sign Up
+        <Button
+          mode='contained'
+          style={styles.button}
+          onPress={() => updateUser()}
+          buttonColor='#6987d0'
+        >
+          Update
         </Button>
         <TouchableOpacity
           onPress={() => {
@@ -212,4 +239,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default PermissionsScreen
+export default EditPermissionsScreen

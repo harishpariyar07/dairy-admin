@@ -15,14 +15,18 @@ const AddFarmer = ({ route }) => {
   const { username } = route.params
 
   const [farmerData, setFarmerData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const fetchData = async () => {
     try {
       if (username) {
+        setIsLoading(true)
         const response = await axios.get(`${URL}admin/${username}/farmer`)
+        setIsLoading(false)
         setFarmerData(response.data)
       }
     } catch (error) {
+      setIsLoading(false)
       console.log(error)
     }
   }
@@ -31,10 +35,10 @@ const AddFarmer = ({ route }) => {
     fetchData()
   }, [])
 
-  const deleteFarmer = async (id) => {
+  const deleteFarmer = async (farmerId) => {
     try {
       if (username) {
-        const res = await axios.delete(`${URL}admin/${username}/farmer/${id}`)
+        const res = await axios.delete(`${URL}admin/${username}/farmer/${farmerId}`)
         alert('Farmer Deleted Successfully')
         setModalVisible(false)
         fetchData()
@@ -46,9 +50,7 @@ const AddFarmer = ({ route }) => {
 
   const Item = ({ farmerId, farmerName, farmerLevel, mobileNumber, id }) => (
     <View style={styles.item}>
-      <View style={styles.icon}>
-        <IconButton icon='account' iconColor={MD3Colors.error50} size={20} />
-      </View>
+      <Text>{farmerId}</Text>
       <View>
         <Text style={styles.name}>{farmerName}</Text>
         <Text>{mobileNumber}</Text>
@@ -67,7 +69,7 @@ const AddFarmer = ({ route }) => {
         iconColor={MD3Colors.error50}
         size={20}
         onPress={() => {
-          setSelectedFarmer({ id, farmerName })
+          setSelectedFarmer({ farmerId, id, farmerName })
           setModalVisible(true)
         }}
       />
@@ -77,7 +79,7 @@ const AddFarmer = ({ route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Searchbar
-        placeholder='Search'
+        placeholder='Search by farmer name'
         onChangeText={(e) => setSearch(e)}
         value={search}
         style={{
@@ -88,27 +90,35 @@ const AddFarmer = ({ route }) => {
         }}
       />
 
-      {farmerData.length === 0 && (
+      {isLoading && (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>No Farmers Found</Text>
+          <Text style={{ fontSize: 20 }}>Loading Farmers...</Text>
         </View>
       )}
 
-      <FlatList
-        data={farmerData.filter(({ farmerName }) =>
-          farmerName.toLowerCase().includes(search.toLowerCase())
-        )}
-        renderItem={({ item }) => (
-          <Item
-            farmerId={item.farmerId}
-            farmerName={item.farmerName}
-            farmerLevel={item.farmerLevel}
-            mobileNumber={item.mobileNumber}
-            id={item._id}
-          />
-        )}
-        keyExtractor={(item) => item._id}
-      />
+      {isLoading === false && farmerData.length === 0 && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>No Farmers Found</Text>
+        </View>
+      )}
+
+      {isLoading === false && farmerData.length > 0 && (
+        <FlatList
+          data={farmerData.filter(({ farmerName }) =>
+            farmerName.toLowerCase().includes(search.toLowerCase())
+          )}
+          renderItem={({ item }) => (
+            <Item
+              farmerId={item.farmerId}
+              farmerName={item.farmerName}
+              farmerLevel={item.farmerLevel}
+              mobileNumber={item.mobileNumber}
+              id={item._id}
+            />
+          )}
+          keyExtractor={(item) => item._id}
+        />
+      )}
 
       <Button
         icon='plus'
@@ -140,7 +150,7 @@ const AddFarmer = ({ route }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonDelete]}
-                onPress={() => deleteFarmer(selectedFarmer?.id)}
+                onPress={() => deleteFarmer(selectedFarmer?.farmerId)}
               >
                 <Text style={styles.modalButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -165,6 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     padding: 10,
+    height: 70,
   },
   icon: {
     flexDirection: 'row',
@@ -172,7 +183,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    width: 200,
+    width: 150,
   },
   button: {
     padding: 4,

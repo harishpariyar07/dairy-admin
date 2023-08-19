@@ -1,5 +1,13 @@
 import { StatusBar } from 'expo-status-bar'
-import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
 import { useEffect, useState } from 'react'
 import { printToFileAsync } from 'expo-print'
 import { shareAsync } from 'expo-sharing'
@@ -10,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { TextInput } from 'react-native-paper'
 import NepaliDate from 'nepali-date-converter'
 import { URL } from '@env'
+const windowWidth = Dimensions.get('window').width
 
 const formatDate = (dateInAd) => {
   const dateInBS = new NepaliDate(dateInAd)
@@ -56,12 +65,16 @@ const GenerateBill = ({ route }) => {
   const [avgSnf, setAvgSnf] = useState(0)
 
   const { username } = route.params
-  const [startDate, setStartDate] = useState(new Date(Date.now()))
+  const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
   const [endDate, setEndDate] = useState(new Date(Date.now()))
   const [isPickerShow1, setIsPickerShow1] = useState(false)
   const [isPickerShow2, setIsPickerShow2] = useState(false)
-  const [startDateString, setStartDateString] = useState('Select date')
-  const [endDateString, setEndDateString] = useState('Select date')
+  const [startDateString, setStartDateString] = useState(
+    `${startDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
+  )
+  const [endDateString, setEndDateString] = useState(
+    `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
+  )
   const [tableData, setTableData] = useState([])
 
   useEffect(() => {
@@ -147,55 +160,47 @@ const GenerateBill = ({ route }) => {
 
   const calculateOverall = () => {
     const qty = filteredTableData.reduce((acc, item) => {
-      if (typeof item[5] === 'number') {
+      if (item[8] === 'Collection' && typeof item[5] === 'number') {
         return acc + item[5]
       }
       return acc
     }, 0)
 
     const credit = filteredTableData.reduce((acc, item) => {
-      if (typeof item[6] === 'number') {
+      if (item[8] === 'Collection' && typeof item[6] === 'number') {
         return acc + item[6]
       }
       return acc
     }, 0)
 
     const debit = filteredTableData.reduce((acc, item) => {
-      if (typeof item[7] === 'number') {
+      if (item[8] !== 'Collection' && typeof item[7] === 'number') {
         return acc + item[7]
       }
       return acc
     }, 0)
 
-    const fat =
+    const avgFat =
       filteredTableData.reduce((acc, item) => {
-        if (typeof item[3] === 'number') {
+        if (item[8] === 'Collection' && typeof item[3] === 'number') {
           return acc + item[3] * item[5]
         }
         return acc
       }, 0) / qty
 
-    const snf =
+    const avgSnf =
       filteredTableData.reduce((acc, item) => {
-        if (typeof item[4] === 'number') {
+        if (item[8] === 'Collection' && typeof item[4] === 'number') {
           return acc + item[4] * item[5]
         }
         return acc
       }, 0) / qty
 
-    setTotalQty(qty)
-    setTotalCredit(credit)
-    setTotalDebit(debit)
-    if (isNaN(fat)) {
-      setAvgFat(0)
-    } else {
-      setAvgFat(fat.toFixed(2))
-    }
-    if (isNaN(snf)) {
-      setAvgSnf(0)
-    } else {
-      setAvgSnf(snf.toFixed(2))
-    }
+    setTotalQty(qty.toFixed(2))
+    setTotalCredit(credit.toFixed(2))
+    setTotalDebit(debit.toFixed(2))
+    setAvgFat(avgFat.toFixed(2))
+    setAvgSnf(avgSnf.toFixed(2))
   }
 
   const html = `
@@ -268,15 +273,15 @@ const GenerateBill = ({ route }) => {
             <tr>
                 <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
                 <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Avg ${avgFat}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Avg ${avgSnf}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Total ${totalQty}L</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Total ${totalCredit}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Total ${totalDebit}</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${avgFat}</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${avgSnf}</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalQty}L</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalCredit}</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalDebit}</th>
                 <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Net Total ${
+                <th style="border: 1px solid black; padding: 8px; text-align: center;">${(
                   totalCredit - totalDebit
-                }</th>
+                ).toFixed(2)}</th>
             </tr>
             </tbody>
     </table>
@@ -297,11 +302,11 @@ const GenerateBill = ({ route }) => {
     }
   }
 
-  const getRecord = () => {
+  const getRecord = async () => {
     try {
-      fetchBillDetails()
-      fetchLedger()
-      fetchFarmerDetails()
+      await fetchBillDetails()
+      await fetchLedger()
+      await fetchFarmerDetails()
       calculateOverall()
       alert('Record fetched successfully')
     } catch (error) {
@@ -313,66 +318,57 @@ const GenerateBill = ({ route }) => {
     <KeyboardAvoidingView style={styles.container}>
       <View style={styles.dateContainer}>
         <View style={styles.dateWrapper}>
-          <Text style={styles.dateText}>From</Text>
+          <Text style={[styles.dateText, { fontSize: 16 }]}>From</Text>
 
-          <HideWithKeyboard style={styles.calender}>
-            {!isPickerShow1 && (
-              <View style={styles.btnContainer}>
-                <Button
-                  mode='text'
-                  icon='calendar-today'
-                  style={styles.button}
-                  onPress={showPicker1}
-                >
-                  <Text>{startDateString}</Text>
-                </Button>
-              </View>
-            )}
+          {/* <HideWithKeyboard style={styles.calender}> */}
+          {!isPickerShow1 && (
+            <View style={styles.btnContainer}>
+              <Button mode='text' icon='calendar-today' onPress={showPicker1}>
+                <Text style={{ fontSize: 16 }}>{startDateString}</Text>
+              </Button>
+            </View>
+          )}
 
-            {isPickerShow1 && (
-              <DateTimePicker
-                value={startDate}
-                mode={'date'}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                is24Hour={true}
-                onChange={onChangeStart}
-                style={styles.datePicker}
-              />
-            )}
-          </HideWithKeyboard>
+          {isPickerShow1 && (
+            <DateTimePicker
+              value={startDate}
+              mode={'date'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              is24Hour={true}
+              onChange={onChangeStart}
+              style={styles.datePicker}
+            />
+          )}
+          {/* </HideWithKeyboard> */}
 
-          <Text style={styles.dateText}>To</Text>
+          <Text style={[styles.dateText, { fontSize: 16 }]}>To</Text>
 
-          <HideWithKeyboard style={styles.calender}>
-            {!isPickerShow2 && (
-              <View style={styles.btnContainer}>
-                <Button
-                  mode='text'
-                  icon='calendar-today'
-                  style={styles.button}
-                  onPress={showPicker2}
-                >
-                  <Text>{endDateString}</Text>
-                </Button>
-              </View>
-            )}
+          {/* <HideWithKeyboard style={styles.calender}> */}
+          {!isPickerShow2 && (
+            <View style={styles.btnContainer}>
+              <Button mode='text' icon='calendar-today' onPress={showPicker2}>
+                <Text style={{ fontSize: 16 }}>{endDateString}</Text>
+              </Button>
+            </View>
+          )}
 
-            {isPickerShow2 && (
-              <DateTimePicker
-                value={endDate}
-                mode={'date'}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                is24Hour={true}
-                onChange={onChangeEnd}
-                style={styles.datePicker}
-              />
-            )}
-          </HideWithKeyboard>
+          {isPickerShow2 && (
+            <DateTimePicker
+              value={endDate}
+              mode={'date'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              is24Hour={true}
+              onChange={onChangeEnd}
+              style={styles.datePicker}
+            />
+          )}
+          {/* </HideWithKeyboard> */}
         </View>
       </View>
 
       <ScrollView>
         <TextInput
+          placeholderTextColor='black'
           value={farmerId}
           mode='outlined'
           label='Enter Farmer Id'
@@ -400,13 +396,13 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   },
 
   dateWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 5,
+    padding: 10,
     borderRadius: 10,
   },
 

@@ -1,7 +1,6 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Searchbar, Button, TextInput } from 'react-native-paper'
-import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import { URL } from '@env'
@@ -9,21 +8,17 @@ import { URL } from '@env'
 import { FlatList } from 'react-native'
 
 const AddCollection = ({ route }) => {
-  const navigator = useNavigation()
-  useLayoutEffect(() => {
-    navigator.setOptions({ headerShown: false })
-  }, [navigator])
-
   const [totalAmt, setTotalAmt] = useState(0)
   const [rate, setRate] = useState(0)
-  const [qty, setQty] = useState(0)
-  const [fat, setFat] = useState(0)
-  const [snf, setSnf] = useState(0)
+  const [qty, setQty] = useState(null)
+  const [fat, setFat] = useState(null)
+  const [snf, setSnf] = useState(null)
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
   const [farmerData, setFarmerData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
-  const { dateString, username } = route.params
+  const { dateString, username, shift } = route.params
   const date = new Date(dateString)
 
   useEffect(() => {
@@ -53,57 +48,44 @@ const AddCollection = ({ route }) => {
     fetchAllFarmers()
   }, [])
 
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        if (!fixedRate && username) {
-          const res = await axios.get(
-            `${URL}admin/${username}/ratelist/${farmerId}/rate?fat=${fat}&snf=${snf}`
-          )
-          setRate(res.data.rate)
-          setTotalAmt(qty * res.data.rate)
-        }
-      } catch (error) {
-        alert('Rate not found')
-        console.log(error)
-      }
-    }
-  }, [fat, snf])
-
   const addCollection = async (farmerId, farmerName, fixedRate) => {
     try {
-      if (username) {
-        if (qty == 0 || fat == 0 || snf == 0) {
-          alert('Please fill all the fields')
-        } else {
-          const res = await axios.get(
-            `${URL}admin/${username}/ratelist/${farmerId}/rate?fat=${fat}&snf=${snf}`
-          )
+      if (username && qty !== null) {
+        setIsLoading(true)
+        const rateResponse = await axios.get(
+          `${URL}admin/${username}/ratelist/${farmerId}/rate?fat=${fat}&snf=${snf}`
+        )
 
-          setRate(res.data.rate)
-          setTotalAmt(qty * res.data.rate)
+        const rateData = rateResponse.data
 
-          await axios.post(`${URL}admin/${username}/collection`, {
+        if (rateData.rate) {
+          setRate(rateData.rate)
+          setTotalAmt(qty * rateData.rate)
+          const collectionResponse = await axios.post(`${URL}admin/${username}/collection`, {
+            shift: shift,
             qty: qty,
-            fat: fat,
-            snf: snf,
+            fat: Number(fat),
+            snf: Number(snf),
             farmerId: farmerId,
             farmerName: farmerName,
             collectionDate: date,
-            rate: rate,
-            amount: totalAmt,
+            amount: Number(qty * rateData.rate).toFixed(2),
+            rate: Number(rateData.rate),
           })
 
-          setQty(0)
-          setFat(0)
-          setSnf(0)
-          setRate(0)
-          setTotalAmt(0)
-          alert('Collection Added Successfully')
+          if (collectionResponse) {
+            setRate(0)
+            setTotalAmt(0)
+            setQty(null)
+            setSearch('')
+            setIsLoading(false)
+            alert('Collection Added Successfully')
+          }
         }
       }
     } catch (error) {
-      alert('Collection not added')
+      setIsLoading(false)
+      alert('Error adding collection')
       console.log(error.message)
     }
   }
@@ -132,6 +114,7 @@ const AddCollection = ({ route }) => {
           setRate(0)
         }}
         value={search}
+        keyboardType='numeric'
       />
 
       {filteredData.length > 0 && search.length === String(filteredData[0].farmerId).length ? (
@@ -154,6 +137,7 @@ const AddCollection = ({ route }) => {
 
             <View>
               <TextInput
+                placeholderTextColor='black'
                 style={styles.textInput}
                 label='Quantity'
                 mode='outlined'
@@ -161,15 +145,16 @@ const AddCollection = ({ route }) => {
                 underlineColor='#e6e6e6'
                 activeUnderlineColor='#e6e6e6'
                 activeOutlineColor='#737373'
-                value={qty.toString()}
+                value={qty > 0 ? qty.toString() : ''}
                 onChangeText={(text) => {
                   setQty(text)
-                  setTotalAmt(text * rate)
+                  setTotalAmt((text * rate).toFixed(2))
                 }}
                 keyboardType='numeric'
               />
 
               <TextInput
+                placeholderTextColor='black'
                 style={styles.textInput}
                 label='Fat'
                 mode='outlined'
@@ -177,12 +162,13 @@ const AddCollection = ({ route }) => {
                 underlineColor='#e6e6e6'
                 activeUnderlineColor='#e6e6e6'
                 activeOutlineColor='#737373'
-                value={fat.toString()}
+                value={fat > 0 ? fat.toString() : ''}
                 onChangeText={(text) => setFat(text)}
                 keyboardType='numeric'
               />
 
               <TextInput
+                placeholderTextColor='black'
                 style={styles.textInput}
                 label='SNF'
                 mode='outlined'
@@ -190,7 +176,7 @@ const AddCollection = ({ route }) => {
                 underlineColor='#e6e6e6'
                 activeUnderlineColor='#e6e6e6'
                 activeOutlineColor='#737373'
-                value={snf.toString()}
+                value={snf > 0 ? snf.toString() : ''}
                 onChangeText={(text) => setSnf(text)}
                 keyboardType='numeric'
               />
@@ -201,9 +187,14 @@ const AddCollection = ({ route }) => {
               icon='plus'
               mode='contained'
               buttonColor='#77b300'
-              onPress={() => addCollection(item.farmerId, item.farmerName, item.fixedRate)}
+              onPress={() => {
+                if (!isLoading) {
+                  addCollection(item.farmerId, item.farmerName, item.fixedRate)
+                }
+              }}
+              disabled={isLoading}
             >
-              Add Collection
+              {isLoading ? 'Adding...' : 'Add Collection'}
             </Button>
           </View>
         ))

@@ -24,11 +24,9 @@ export const AuthProvider = ({ children }) => {
         const token = await SecureStore.getItemAsync(TOKEN_KEY)
         const expiryDate = await SecureStore.getItemAsync(EXPIRY_DATE)
         if (token) {
-          const currentTime = Date.now()
-          console.log(currentTime, expiryDate)
-          if (new Date(expiryDate) < currentTime) {
+          const currentDate = new Date()
+          if (new Date(expiryDate) > currentDate) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-
             setAuthState({
               token: token,
               authenticated: true,
@@ -39,7 +37,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        console.log(error)
+        console.log('error')
       }
     }
 
@@ -94,7 +92,6 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     try {
       if (email && email.length > 0 && password && password.length > 0) {
-        console.log(`${URL}admin/login`)
         const res = await axios.post(`${URL}admin/login`, {
           email,
           password,

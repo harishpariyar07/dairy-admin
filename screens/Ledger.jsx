@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Platform, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -18,12 +18,16 @@ function formatDate(date) {
 
 const Ledger = ({ route }) => {
   // FOR DATE PICKER
-  const [startDate, setStartDate] = useState(new Date(Date.now()))
+  const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
   const [endDate, setEndDate] = useState(new Date(Date.now()))
   const [isPickerShow1, setIsPickerShow1] = useState(false)
   const [isPickerShow2, setIsPickerShow2] = useState(false)
-  const [startDateString, setStartDateString] = useState('Select date')
-  const [endDateString, setEndDateString] = useState('Select date')
+  const [startDateString, setStartDateString] = useState(
+    `${startDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
+  )
+  const [endDateString, setEndDateString] = useState(
+    `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
+  )
   const [tableData, setTableData] = useState([])
 
   // FOR SEARCH BOX
@@ -31,11 +35,11 @@ const Ledger = ({ route }) => {
 
   // FOR TABLE
   const tableHead = [
-    { label: 'Id', flex: 1 },
-    { label: 'Date', flex: 1 },
-    { label: 'Credit', flex: 1 },
-    { label: 'Debit', flex: 1 },
-    { label: 'Remarks', flex: 1 },
+    { label: 'Id', flex: 0.1 },
+    { label: 'Date', flex: 0.25 },
+    { label: 'Credit', flex: 0.2 },
+    { label: 'Debit', flex: 0.2 },
+    { label: 'Remarks', flex: 0.25 },
   ]
 
   const { username } = route.params
@@ -94,64 +98,54 @@ const Ledger = ({ route }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <KeyboardAvoidingView style={styles.container}>
       <View style={styles.dateContainer}>
         <View style={styles.dateWrapper}>
-          <Text style={styles.dateText}>From</Text>
+          <Text style={[styles.dateText, { fontSize: 16 }]}>From</Text>
 
-          <HideWithKeyboard style={styles.calender}>
-            {!isPickerShow1 && (
-              <View style={styles.btnContainer}>
-                <Button
-                  mode='text'
-                  icon='calendar-today'
-                  style={styles.button}
-                  onPress={showPicker1}
-                >
-                  <Text>{startDateString}</Text>
-                </Button>
-              </View>
-            )}
+          {/* <HideWithKeyboard style={styles.calender}> */}
+          {!isPickerShow1 && (
+            <View style={styles.btnContainer}>
+              <Button mode='text' icon='calendar-today' onPress={showPicker1}>
+                <Text style={{ fontSize: 16 }}>{startDateString}</Text>
+              </Button>
+            </View>
+          )}
 
-            {isPickerShow1 && (
-              <DateTimePicker
-                value={startDate}
-                mode={'date'}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                is24Hour={true}
-                onChange={onChangeStart}
-                style={styles.datePicker}
-              />
-            )}
-          </HideWithKeyboard>
+          {isPickerShow1 && (
+            <DateTimePicker
+              value={startDate}
+              mode={'date'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              is24Hour={true}
+              onChange={onChangeStart}
+              style={styles.datePicker}
+            />
+          )}
+          {/* </HideWithKeyboard> */}
 
-          <Text style={styles.dateText}>To</Text>
+          <Text style={[styles.dateText, { fontSize: 16 }]}>To</Text>
 
-          <HideWithKeyboard style={styles.calender}>
-            {!isPickerShow2 && (
-              <View style={styles.btnContainer}>
-                <Button
-                  mode='text'
-                  icon='calendar-today'
-                  style={styles.button}
-                  onPress={showPicker2}
-                >
-                  <Text>{endDateString}</Text>
-                </Button>
-              </View>
-            )}
+          {/* <HideWithKeyboard style={styles.calender}> */}
+          {!isPickerShow2 && (
+            <View style={styles.btnContainer}>
+              <Button mode='text' icon='calendar-today' onPress={showPicker2}>
+                <Text style={{ fontSize: 16 }}>{endDateString}</Text>
+              </Button>
+            </View>
+          )}
 
-            {isPickerShow2 && (
-              <DateTimePicker
-                value={endDate}
-                mode={'date'}
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                is24Hour={true}
-                onChange={onChangeEnd}
-                style={styles.datePicker}
-              />
-            )}
-          </HideWithKeyboard>
+          {isPickerShow2 && (
+            <DateTimePicker
+              value={endDate}
+              mode={'date'}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              is24Hour={true}
+              onChange={onChangeEnd}
+              style={styles.datePicker}
+            />
+          )}
+          {/* </HideWithKeyboard> */}
         </View>
       </View>
 
@@ -163,35 +157,35 @@ const Ledger = ({ route }) => {
         }}
         value={search}
         style={styles.searchBar}
+        keyboardType='numeric'
       />
 
       <View style={styles.tableContainer}>
+        <Row
+          data={tableHead.map((header) => header.label)}
+          flexArr={tableHead.map((header) => header.flex)}
+          style={styles.head}
+          textStyle={styles.headText}
+        />
         <ScrollView>
           <Table style={styles.table}>
-            <Row
-              data={tableHead.map((header) => header.label)}
-              flexArr={tableHead.map((header) => header.flex)}
-              style={styles.head}
-              textStyle={styles.headText}
-            />
-            {filteredTableData &&
-              filteredTableData.map((rowData, index) => (
-                <Row
-                  key={index}
-                  data={rowData}
-                  style={[
-                    styles.row,
-                    index % 2 === 0 && styles.evenRow,
-                    index === 0 && styles.firstRow,
-                  ]}
-                  textStyle={styles.text}
-                  widthArr={tableHead.map((header) => header.width)}
-                />
-              ))}
+            {(search === '' ? tableData : filteredTableData).map((rowData, index) => (
+              <Row
+                key={index}
+                data={rowData}
+                style={[
+                  styles.row,
+                  index % 2 === 0 && styles.evenRow,
+                  index === 0 && styles.firstRow,
+                ]}
+                textStyle={styles.text}
+                flexArr={tableHead.map((header) => header.flex)}
+              />
+            ))}
           </Table>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -199,21 +193,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-
-  textContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
   dateContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   },
 
   dateWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 5,
+    padding: 10,
     borderRadius: 10,
   },
 
@@ -244,8 +232,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   head: {
-    height: 30,
     backgroundColor: '#6987d0',
+    padding: 15,
   },
   headText: {
     color: '#fff',
@@ -255,9 +243,9 @@ const styles = StyleSheet.create({
     fontFamily: 'InterB',
   },
   row: {
-    height: 45,
     borderBottomWidth: 1,
     borderColor: '#ccc',
+    padding: 5,
   },
   evenRow: {
     backgroundColor: '#f9f9f9',

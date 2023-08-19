@@ -14,12 +14,12 @@ import { DataTable } from 'react-native-paper'
 import axios from 'axios'
 import { URL } from '@env'
 import users from '../assets/icons/users.png'
-import addUser from '../assets/icons/addUser.png'
 import editBill from '../assets/icons/editBill.png'
+import collectionCenter from '../assets/icons/collectionCenter.png'
 
 const screens = [
+  { name: 'Collection Center', component: 'CollectionCenter', image: collectionCenter },
   { name: 'Users', component: 'Users', image: users },
-  { name: 'Add User', component: 'RegisterScreen', image: addUser },
   { name: 'Edit Bill', component: 'BillDetails', image: editBill },
 ]
 
@@ -54,8 +54,7 @@ const HomeScreen = () => {
       const res = await axios.get(
         `${URL}admin/collection/totalmilk?start=${startOfDay}&end=${endOfDay}`
       )
-      console.log()
-      setTotalMilk((res.data.length && res.data[0].totalMilk).toFixed(2) || 0)
+      setTotalMilk((res.data.length && res.data[0].totalMilk.toFixed(2)) || 0)
     } catch (error) {
       console.log(error)
     }
@@ -66,7 +65,7 @@ const HomeScreen = () => {
       const res = await axios.get(
         `${URL}admin/collection/avgfat?start=${startOfDay}&end=${endOfDay}`
       )
-      setAvgFat((res.data.length && res.data[0].averageFat).toFixed(2) || 0)
+      setAvgFat((res.data.length && res.data[0].averageFat.toFixed(2)) || 0)
     } catch (error) {
       console.log(error)
     }
@@ -77,7 +76,7 @@ const HomeScreen = () => {
       const res = await axios.get(
         `${URL}admin/collection/avgsnf?start=${startOfDay}&end=${endOfDay}`
       )
-      setAvgSNF((res.data.length && res.data[0].averageSNF).toFixed(2) || 0)
+      setAvgSNF((res.data.length && res.data[0].averageSNF.toFixed(2)) || 0)
     } catch (error) {
       console.log(error)
     }

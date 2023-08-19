@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native'
 import { Searchbar, Button, TextInput } from 'react-native-paper'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useNavigation } from '@react-navigation/native'
@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native'
 import moment from 'moment/moment'
 import axios from 'axios'
 import { URL } from '@env'
+import HideWithKeyboard from 'react-native-hide-with-keyboard'
 
 const Payments = ({ route }) => {
   const navigator = useNavigation()
@@ -14,9 +15,10 @@ const Payments = ({ route }) => {
   const [date, setDate] = useState(new Date(Date.now()))
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
-  const [amountToPay, setAmountToPay] = useState(0)
+  const [amountToPay, setAmountToPay] = useState(null)
   const [remarks, setRemarks] = useState('')
   const { username } = route.params
+  const [isLoading, setIsLoading] = useState(false)
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -51,22 +53,26 @@ const Payments = ({ route }) => {
 
   const addPayment = async (farmerId) => {
     try {
-      await axios.post(`${URL}admin/${username}/payment`, {
-        farmerId,
-        date,
-        amountToPay,
-        remarks,
-      })
+      if (username && amountToPay !== 0) {
+        setIsLoading(true)
+        await axios.post(`${URL}admin/${username}/payment`, {
+          farmerId,
+          date,
+          amountToPay,
+          remarks,
+        })
 
-      setAmountToPay(0)
-      setRemarks('')
-      alert('Payment added successfully')
+        setAmountToPay(0)
+        setRemarks('')
+        setIsLoading(false)
+        alert('Payment added successfully')
+      }
     } catch (error) {
       console.log(error)
     }
   }
 
-  const filteredData = data.filter((item) => String(item.farmerId).includes(search))
+  const filteredData = data.filter((item) => String(item.farmerId) === search)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -79,6 +85,7 @@ const Payments = ({ route }) => {
           setRemarks('')
         }}
         value={search}
+        keyboardType='numeric'
       />
 
       {filteredData.length > 0 && search.length === String(filteredData[0].farmerId).length ? (
@@ -86,41 +93,46 @@ const Payments = ({ route }) => {
           <View style={styles.farmerDetails} key={index}>
             <View style={{ flexDirection: 'row', padding: 5 }}>
               <Text style={{ color: 'red', fontFamily: 'InterB' }}>FARMER NAME: </Text>
-              <Text>{item.farmerName}</Text>
+              <Text style={{ fontSize: 15 }}>{item.farmerName}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', padding: 5 }}>
               <Text style={{ color: 'red', fontFamily: 'InterB' }}>FARMER ID: </Text>
-              <Text>{item.farmerId}</Text>
+              <Text style={{ fontSize: 15 }}>{item.farmerId}</Text>
             </View>
 
             <View style={{ flexDirection: 'row', padding: 5 }}>
               <Text style={{ color: 'red', fontFamily: 'InterB' }}>BALANCE: </Text>
-              <Text> ₹ {item.balance}</Text>
+              <Text style={{ fontSize: 15 }}> ₹ {item.balance}</Text>
             </View>
 
             <View>
-              {!isPickerShow && (
-                <View style={styles.dateContainer}>
-                  <TouchableOpacity style={styles.button} onPress={showPicker}>
-                    <Text style={{ fontFamily: 'Inter' }}>{moment(date).format('DD-MM-YYYY')}</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+              <HideWithKeyboard>
+                {!isPickerShow && (
+                  <View style={styles.dateContainer}>
+                    <TouchableOpacity style={styles.button} onPress={showPicker}>
+                      <Text style={{ fontFamily: 'Inter' }}>
+                        {moment(date).format('DD-MM-YYYY')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
-              {/* The date picker */}
-              {isPickerShow && (
-                <DateTimePicker
-                  value={date.toDateString()}
-                  mode={'date'}
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  is24Hour={true}
-                  onChange={onChange}
-                  style={styles.datePicker}
-                />
-              )}
+                {/* The date picker */}
+                {isPickerShow && (
+                  <DateTimePicker
+                    value={date}
+                    mode={'date'}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    is24Hour={true}
+                    onChange={onChange}
+                    style={styles.datePicker}
+                  />
+                )}
+              </HideWithKeyboard>
 
               <TextInput
+                placeholderTextColor='black'
                 style={styles.textInput}
                 label='Amount to Pay'
                 mode='outlined'
@@ -128,12 +140,13 @@ const Payments = ({ route }) => {
                 underlineColor='#e6e6e6'
                 activeUnderlineColor='#e6e6e6'
                 activeOutlineColor='#737373'
-                value={amountToPay.toString()}
+                value={amountToPay > 0 ? amountToPay.toString() : ''}
                 onChangeText={(text) => setAmountToPay(text)}
                 keyboardType='numeric'
               />
 
               <TextInput
+                placeholderTextColor='black'
                 style={[styles.textInput]}
                 label='Remarks'
                 mode='outlined'
@@ -153,9 +166,10 @@ const Payments = ({ route }) => {
                 style={styles.button}
                 mode='contained'
                 buttonColor='#77b300'
+                disabled={isLoading}
                 onPress={() => addPayment(item.farmerId)}
               >
-                Pay Now
+                {isLoading ? 'Paying...' : 'Pay'}
               </Button>
             </View>
           </View>
@@ -195,6 +209,14 @@ const styles = StyleSheet.create({
     borderColor: '#edebeb',
     borderWidth: 2,
     padding: 10,
+  },
+  calender: {
+    flex: 0.3,
+    alignItems: 'center',
+    top: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 40,
   },
   btnCnt: {
     marginVertical: 10,

@@ -22,26 +22,24 @@ const paymentModeOptions = [
 
 const EditFarmerDetails = ({ route }) => {
   const [farmerId, setFarmerId] = useState(-1)
-  const [rfid, setRfId] = useState('')
   const [mobileNumber, setMobileNumber] = useState('')
   const [farmerName, setFarmerName] = useState('')
   const [farmerLevel, setFarmerLevel] = useState(null)
-  const [fixedRate, setFixedRate] = useState(0)
+  const [fixedRate, setFixedRate] = useState(null)
   const [paymentMode, setPaymentMode] = useState('')
   const [bankName, setBankName] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [bankHolderName, setBankHolderName] = useState('')
   const [showDropDown1, setShowDropDown1] = useState(false)
   const [showDropDown2, setShowDropDown2] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { username } = route.params
 
   const fetchFarmerData = async () => {
     try {
-      if (route.params.username) {
-        const res = await axios.get(
-          `${URL}admin/${route.params.username}/farmer/${route.params.farmerId}`
-        )
+      if (username) {
+        const res = await axios.get(`${URL}admin/${username}/farmer/${route.params.farmerId}`)
         setFarmerId(res.data.farmerId)
-        setRfId(res.data.rfid)
         setMobileNumber(res.data.mobileNumber)
         setFarmerName(res.data.farmerName)
         setFarmerLevel(res.data.farmerLevel)
@@ -63,9 +61,9 @@ const EditFarmerDetails = ({ route }) => {
   const updateFarmerData = async () => {
     try {
       if (username) {
-        const res = await axios.put(`${URL}admin/${username}/farmer/${id}`, {
+        setIsLoading(true)
+        const res = await axios.put(`${URL}admin/${username}/farmer/${route.params.farmerId}`, {
           farmerId,
-          rfid,
           mobileNumber,
           farmerName,
           farmerLevel,
@@ -76,10 +74,12 @@ const EditFarmerDetails = ({ route }) => {
           fixedRate,
         })
 
+        setIsLoading(false)
         alert('Farmer Details Updated Successfully')
         fetchFarmerData()
       }
     } catch (error) {
+      setIsLoading(false)
       alert('Error in updating farmer details')
       console.log(error)
     }
@@ -90,6 +90,7 @@ const EditFarmerDetails = ({ route }) => {
       <ScrollView>
         {farmerId >= 1 && (
           <TextInput
+            placeholderTextColor='black'
             label='Farmer ID'
             defaultValue={String(farmerId)}
             editable={false}
@@ -97,15 +98,8 @@ const EditFarmerDetails = ({ route }) => {
             style={styles.textInput}
           />
         )}
-
         <TextInput
-          label='RFID'
-          value={rfid && rfid.toString()}
-          onChangeText={(id) => setRfId(id)}
-          selectionColor='black'
-          style={styles.textInput}
-        />
-        <TextInput
+          placeholderTextColor='black'
           label='Mobile Number'
           value={mobileNumber && mobileNumber.toString()}
           onChangeText={(num) => setMobileNumber(num)}
@@ -113,6 +107,7 @@ const EditFarmerDetails = ({ route }) => {
           style={styles.textInput}
         />
         <TextInput
+          placeholderTextColor='black'
           label='Farmer Name'
           value={farmerName}
           onChangeText={(name) => setFarmerName(name)}
@@ -142,6 +137,7 @@ const EditFarmerDetails = ({ route }) => {
 
         {farmerLevel === 5 && (
           <TextInput
+            placeholderTextColor='black'
             label='Fixed Rate'
             value={fixedRate && fixedRate.toString()}
             onChangeText={(rate) => setFixedRate(rate)}
@@ -173,6 +169,7 @@ const EditFarmerDetails = ({ route }) => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Bank Name'
           value={bankName}
           onChangeText={(name) => setBankName(name)}
@@ -180,6 +177,7 @@ const EditFarmerDetails = ({ route }) => {
           style={styles.textInput}
         />
         <TextInput
+          placeholderTextColor='black'
           label='Bank Account Number'
           value={accountNumber}
           onChangeText={(acc) => setAccountNumber(acc)}
@@ -187,6 +185,7 @@ const EditFarmerDetails = ({ route }) => {
           style={styles.textInput}
         />
         <TextInput
+          placeholderTextColor='black'
           label='Bank Holder Name'
           value={bankHolderName}
           onChangeText={(name) => setBankHolderName(name)}
@@ -200,8 +199,9 @@ const EditFarmerDetails = ({ route }) => {
         mode='contained'
         onPress={() => updateFarmerData()}
         style={styles.button}
+        disabled={isLoading}
       >
-        Update
+        {isLoading ? 'Updating...' : 'Update'}
       </Button>
     </SafeAreaView>
   )

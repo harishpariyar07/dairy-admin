@@ -1,28 +1,26 @@
 {
   "expo": {
-    "name": "dairy-admin",
+    "name": "HAMROO DAIRY ADMIN",
     "slug": "dairy-admin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icons/adminLogo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icons/adminLogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/adminLogo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.hamrokhp.dairy"
+      "package": "com.hamrokhp.dairyadmin"
     },
     "web": {
       "favicon": "./assets/favicon.png"

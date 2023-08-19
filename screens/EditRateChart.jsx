@@ -29,6 +29,7 @@ const EditRateChart = ({ route }) => {
   const [stdSNFRate, setStdSNFRate] = useState()
   const [stdTSRate, setStdTSRate] = useState()
   const [incentive, setIncentive] = useState()
+  const [isLoading, setIsLoading] = useState(false)
   const { username, id } = route.params
 
   const fetchRateData = async () => {
@@ -56,6 +57,7 @@ const EditRateChart = ({ route }) => {
   const updateRateChart = async () => {
     try {
       if (username) {
+        setIsLoading(true)
         const res = await axios.put(`${URL}admin/${username}/ratelist/${id}`, {
           category,
           level,
@@ -66,11 +68,13 @@ const EditRateChart = ({ route }) => {
           incentive,
         })
 
+        setIsLoading(false)
         alert('Rate Chart Updated Successfully')
         fetchRateData()
       }
     } catch (error) {
-      alert('Error in updating farmer details')
+      setIsLoading(false)
+      alert('Error in updating rate chart')
       console.log(error)
     }
   }
@@ -83,7 +87,7 @@ const EditRateChart = ({ route }) => {
         <DropDown
           label={'ENTER CATEGORY'}
           mode={'flat'}
-          visible='false'
+          visible={showDropDown1}
           showDropDown={() => setShowDropDown1(true)}
           onDismiss={() => setShowDropDown1(false)}
           value={category}
@@ -103,7 +107,7 @@ const EditRateChart = ({ route }) => {
         <DropDown
           label={'ENTER LEVEL'}
           mode={'flat'}
-          visible='false'
+          visible={showDropDown2}
           showDropDown={() => setShowDropDown2(true)}
           onDismiss={() => setShowDropDown2(false)}
           value={level}
@@ -112,6 +116,7 @@ const EditRateChart = ({ route }) => {
           dropDownStyle={styles.dropStyle}
           dropDownItemStyle={styles.dropDownStyle}
           dropDownItemSelectedStyle={styles.dropDownStyle}
+          dropDownItemSelectedTextStyle={{ color: 'navy', fontWeight: 500 }}
           inputProps={{
             style: {
               backgroundColor: 'white',
@@ -121,6 +126,7 @@ const EditRateChart = ({ route }) => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='ENTER RATE CHART NAME'
           value={rateChartName}
           onChangeText={(name) => setRateChartName(name)}
@@ -130,6 +136,7 @@ const EditRateChart = ({ route }) => {
 
         {(category === 'KGFAT + KGSNF' || category === 'KG FAT ONLY') && (
           <TextInput
+            placeholderTextColor='black'
             label='ENTER STANDARD FAT RATE'
             value={stdFatRate && stdFatRate.toString()}
             onChangeText={(fat) => setStdFatRate(fat)}
@@ -142,6 +149,7 @@ const EditRateChart = ({ route }) => {
         {category === 'KGFAT + KGSNF' && (
           <View>
             <TextInput
+              placeholderTextColor='black'
               label='ENTER STANDARD SNF RATE'
               value={stdSNFRate && stdSNFRate.toString()}
               onChangeText={(snf) => setStdSNFRate(snf)}
@@ -150,6 +158,7 @@ const EditRateChart = ({ route }) => {
               keyboardType='numeric'
             />
             <TextInput
+              placeholderTextColor='black'
               label='ENTER TS RATE'
               value={stdTSRate && stdTSRate.toString()}
               onChangeText={(rate) => setStdTSRate(rate)}
@@ -161,6 +170,7 @@ const EditRateChart = ({ route }) => {
         )}
 
         <TextInput
+          placeholderTextColor='black'
           label='ENTER INCENTIVE'
           value={incentive && incentive.toString()}
           onChangeText={(i) => setIncentive(i)}
@@ -175,8 +185,9 @@ const EditRateChart = ({ route }) => {
         mode='contained'
         onPress={() => updateRateChart()}
         style={styles.button}
+        disabled={isLoading}
       >
-        Update
+        {isLoading ? 'Updating...' : 'Update'}
       </Button>
     </SafeAreaView>
   )

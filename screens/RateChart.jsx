@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { Button, IconButton, MD3Colors, Modal } from 'react-native-paper'
@@ -7,6 +7,8 @@ import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import { URL } from '@env'
 
+const windowWidth = Dimensions.get('window').width
+
 const RateChart = ({ route }) => {
   const navigator = useNavigation()
   const [search, setSearch] = useState('')
@@ -14,14 +16,18 @@ const RateChart = ({ route }) => {
   const [selectedRateChart, setSelectedRateChart] = useState(null)
   const [modalVisible, setModalVisible] = useState(false)
   const { username } = route.params
+  const [isLoading, setIsLoading] = useState(false)
 
   const fetchData = async () => {
     try {
       if (username) {
+        setIsLoading(true)
         const response = await axios.get(`${URL}admin/${username}/ratelist`)
+        setIsLoading(false)
         setRateChartData(response.data)
       }
     } catch (error) {
+      setIsLoading(false)
       alert('Only Admin can access this page')
       navigator.goBack()
       console.log(error)
@@ -47,12 +53,14 @@ const RateChart = ({ route }) => {
         icon='pencil'
         iconColor={MD3Colors.error50}
         size={20}
+        style={{ width: windowWidth * 0.15 }}
         onPress={() => navigator.navigate('EditRateChart', { username, id })}
       />
       <IconButton
         icon='delete'
         iconColor={MD3Colors.error50}
         size={20}
+        style={{ width: windowWidth * 0.15 }}
         onPress={() => {
           setSelectedRateChart({ category, rateChartName, level, id })
           setModalVisible(true)
@@ -76,29 +84,36 @@ const RateChart = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {rateChartData.length === 0 && (
+      {isLoading && (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>No Rate Chart Found</Text>
+          <Text style={{ fontSize: 20 }}>Loading Rate Chart...</Text>
+        </View>
+      )}
+      {isLoading === false && rateChartData.length === 0 && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>No Rate Chart Found</Text>
         </View>
       )}
 
-      <FlatList
-        data={rateChartData.filter(({ rateChartName }) =>
-          rateChartName.toLowerCase().includes(search.toLowerCase())
-        )}
-        renderItem={({ item }) => (
-          <Item
-            rateChartName={item.rateChartName}
-            level={item.level}
-            animal={item.animal}
-            category={item.category}
-            id={item._id}
-            key={item._id}
-          />
-        )}
-        key={(item) => item._id}
-        keyExtractor={(item) => item._id}
-      />
+      {isLoading === false && rateChartData.length > 0 && (
+        <FlatList
+          data={rateChartData.filter(({ rateChartName }) =>
+            rateChartName.toLowerCase().includes(search.toLowerCase())
+          )}
+          renderItem={({ item }) => (
+            <Item
+              rateChartName={item.rateChartName}
+              level={item.level}
+              animal={item.animal}
+              category={item.category}
+              id={item._id}
+              key={item._id}
+            />
+          )}
+          key={(item) => item._id}
+          keyExtractor={(item) => item._id}
+        />
+      )}
 
       <Button
         icon='plus'
@@ -156,7 +171,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   itemDetails: {
-    width: 300,
+    width: windowWidth * 0.6,
   },
   wrapper: {
     flexDirection: 'row',

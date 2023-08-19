@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native'
-import React, { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useState, useEffect } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { TextInput, Button } from 'react-native-paper'
-import { useAuth } from '../context/AuthContext'
-
+import { TextInput, Button, IconButton } from 'react-native-paper'
 import { KeyboardAvoidingView } from 'react-native'
+import axios from 'axios'
+import { URL } from '@env'
 
-const RegisterScreen = () => {
+const EditUser = ({ route }) => {
   // all the states
   const [userId, setUserId] = useState('')
   const [username, setUsername] = useState('')
@@ -15,12 +15,20 @@ const RegisterScreen = () => {
   const [address, setAddress] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const { onRegister } = useAuth()
-
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false)
   const navigator = useNavigation()
 
+  const togglePasswordVisibility = () => {
+    setIsPasswordVisible(!isPasswordVisible)
+  }
+
+  const toggleConfirmPasswordVisibility = () => {
+    setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
+  }
+
   const navigateToPermissions = () => {
-    navigator.navigate('PermissionsScreen', {
+    navigator.navigate('EditPermissionsScreen', {
       userId,
       username,
       mobileNo,
@@ -30,6 +38,27 @@ const RegisterScreen = () => {
       confirmPassword,
     })
   }
+
+  const fetchUserData = async () => {
+    try {
+      if (route.params.username) {
+        const res = await axios.get(`${URL}user/${route.params.username}`)
+        setUserId(res.data.userId)
+        setUsername(res.data.username)
+        setMobileNo(res.data.mobileNo)
+        setContactPerson(res.data.contactPerson)
+        setAddress(res.data.address)
+        setPassword(res.data.password)
+        setConfirmPassword(res.data.password)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    fetchUserData()
+  }, [])
 
   useLayoutEffect(() => {
     navigator.setOptions({
@@ -43,7 +72,7 @@ const RegisterScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView>
-        <Text style={styles.heading}>Register New User</Text>
+        <Text style={styles.heading}>Edit User</Text>
         <View style={styles.form}>
           <TextInput
             placeholderTextColor='black'
@@ -54,7 +83,7 @@ const RegisterScreen = () => {
             activeUnderlineColor='#3c66cf'
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
-            value={userId}
+            value={userId && userId.toString()}
             onChangeText={(e) => {
               setUserId(e)
             }}
@@ -84,7 +113,7 @@ const RegisterScreen = () => {
             activeUnderlineColor='#3c66cf'
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
-            value={mobileNo}
+            value={mobileNo && mobileNo.toString()}
             keyboardType='numeric'
             onChangeText={(e) => {
               setMobileNo(e)
@@ -121,37 +150,51 @@ const RegisterScreen = () => {
             }}
           />
 
-          <TextInput
-            placeholderTextColor='black'
-            style={styles.input}
-            label='Password'
-            secureTextEntry
-            type='outlined'
-            underlineColor='#3c66cf'
-            activeUnderlineColor='#3c66cf'
-            outlineColor='#3c66cf'
-            activeOutlineColor='#3c66cf'
-            value={password}
-            onChangeText={(e) => {
-              setPassword(e)
-            }}
-          />
+          <View style={[styles.input, { justifyContent: 'space-between', flexDirection: 'row' }]}>
+            <TextInput
+              placeholderTextColor='black'
+              style={{ flex: 1, backgroundColor: '#e9edf7' }}
+              label='Password'
+              secureTextEntry={!isPasswordVisible}
+              type='outlined'
+              underlineColor='#3c66cf'
+              activeUnderlineColor='#3c66cf'
+              outlineColor='#3c66cf'
+              activeOutlineColor='#3c66cf'
+              value={password}
+              onChangeText={(e) => {
+                setPassword(e)
+              }}
+            />
+            <TouchableOpacity onPress={togglePasswordVisibility}>
+              <IconButton icon={isPasswordVisible ? 'eye-off' : 'eye'} color='#3c66cf' size={20} />
+            </TouchableOpacity>
+          </View>
 
-          <TextInput
-            placeholderTextColor='black'
-            style={styles.input}
-            label='Confirm Password'
-            secureTextEntry
-            type='outlined'
-            underlineColor='#3c66cf'
-            activeUnderlineColor='#3c66cf'
-            outlineColor='#3c66cf'
-            activeOutlineColor='#3c66cf'
-            value={confirmPassword}
-            onChangeText={(e) => {
-              setConfirmPassword(e)
-            }}
-          />
+          <View style={[styles.input, { justifyContent: 'space-between', flexDirection: 'row' }]}>
+            <TextInput
+              placeholderTextColor='black'
+              style={{ flex: 1, backgroundColor: '#e9edf7' }}
+              label='Confirm Password'
+              secureTextEntry={!isConfirmPasswordVisible}
+              type='outlined'
+              underlineColor='#3c66cf'
+              activeUnderlineColor='#3c66cf'
+              outlineColor='#3c66cf'
+              activeOutlineColor='#3c66cf'
+              value={confirmPassword}
+              onChangeText={(e) => {
+                setPassword(e)
+              }}
+            />
+            <TouchableOpacity onPress={toggleConfirmPasswordVisibility}>
+              <IconButton
+                icon={isConfirmPasswordVisible ? 'eye-off' : 'eye'}
+                color='#3c66cf'
+                size={20}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.buttons}>
@@ -166,7 +209,7 @@ const RegisterScreen = () => {
 
           <TouchableOpacity
             onPress={() => {
-              navigator.navigate('HomeScreen')
+              navigator.goBack()
             }}
           >
             <Text style={styles.back}>Go Back</Text>
@@ -218,4 +261,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default RegisterScreen
+export default EditUser

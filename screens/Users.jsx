@@ -1,143 +1,207 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native'
+import { Button, Searchbar, IconButton, MD3Colors } from 'react-native-paper'
+import { FlatList } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import { URL } from '@env'
 
-const Users = ({ navigation }) => {
-  const [users, setUsers] = useState([])
-  const [farmersCount, setFarmersCount] = useState({})
+const Users = () => {
+  const [search, setSearch] = useState('')
+  const [modalVisible, setModalVisible] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
+  const navigator = useNavigation()
+
+  const [userData, setUserData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+      const response = await axios.get(`${URL}user`)
+      setIsLoading(false)
+      setUserData(response.data)
+    } catch (error) {
+      setIsLoading(false)
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        console.log(`${URL}user`)
-        const response = await axios.get(`${URL}user`)
-        setUsers(response.data)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-    fetchUsers()
+    fetchData()
   }, [])
 
-  const getNoOfFarmers = async (username) => {
-    try {
-      if (username) {
-        const res = await axios.get(`${URL}admin/${username}/farmer`)
-        return res.data.length
-      }
-      return 0
-    } catch (error) {
-      console.log(error)
-      return 0
-    }
-  }
-
-  useEffect(() => {
-    const fetchFarmersCount = async () => {
-      try {
-        const counts = {}
-        for (const user of users) {
-          const count = await getNoOfFarmers(user.username)
-          counts[user.username] = count
-        }
-        setFarmersCount(counts)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-    fetchFarmersCount()
-  }, [users])
-
-  const handleUserClick = (username) => {
-    navigation.navigate('Features', { username })
-  }
-
-  const renderUserItem = ({ item }) => (
-    <TouchableOpacity style={styles.userItem} onPress={() => handleUserClick(item.username)}>
-      <View
-        style={{
-          flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
+  const Item = ({ contactPerson, username, userId }) => (
+    <View style={styles.item} onPress={() => navigator.navigate('Features', { username })}>
+      <Text>{userId}</Text>
+      <View>
+        <Text style={styles.name}>{contactPerson}</Text>
+        <Text style={{ color: 'gray' }}>{username}</Text>
+      </View>
+      <TouchableOpacity
+        style={{ flexDirection: 'row', alignItems: 'center' }}
+        onPress={() => {
+          navigator.navigate('EditUser', { username })
         }}
       >
-        <Text style={[styles.username, { flex: 1 }]} sty>
-          Name: {item.contactPerson}
-        </Text>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: 'column',
-          }}
-        >
-          <Text style={styles.userId}>Username: {item.username}</Text>
-          <Text style={styles.userId}>User ID: {item.userId}</Text>
-          <Text style={styles.userId}>Password: {item.password}</Text>
-          <Text style={styles.userId}>Farmers: {farmersCount[item.username] || 0}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+        <Text> Edit </Text>
+        <IconButton icon='pencil' iconColor={MD3Colors.error50} size={20} />
+      </TouchableOpacity>
+    </View>
   )
 
   return (
-    <View style={styles.container}>
-      <View style={styles.box}>
+    <SafeAreaView style={styles.container}>
+      <Searchbar
+        placeholder='Search by user name'
+        onChangeText={(e) => setSearch(e)}
+        value={search}
+        style={{
+          margin: 10,
+          backgroundColor: '#fff',
+          borderColor: '#edebeb',
+          borderWidth: 2,
+        }}
+      />
+
+      {isLoading && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>Loading Users...</Text>
+        </View>
+      )}
+
+      {isLoading === false && userData.length === 0 && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>No Users Found</Text>
+        </View>
+      )}
+
+      {isLoading === false && userData.length > 0 && (
         <FlatList
-          data={users}
-          renderItem={renderUserItem}
+          data={userData.filter(({ username }) =>
+            username.toLowerCase().includes(search.toLowerCase())
+          )}
+          renderItem={({ item }) => (
+            <Item
+              username={item.username}
+              contactPerson={item.contactPerson}
+              userId={item.userId}
+              id={item._id}
+            />
+          )}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
         />
-      </View>
-    </View>
+      )}
+
+      <Button
+        icon='plus'
+        mode='contained'
+        onPress={() => navigator.navigate('RegisterScreen')}
+        style={styles.button}
+        buttonColor='#6987d0'
+      >
+        Add User
+      </Button>
+
+      <Modal
+        animationType='slide'
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Confirm Delete?</Text>
+            <Text>{`Username: ${selectedUser?.username}`}</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDelete]}
+                onPress={() => deleteUser(selectedUser?.username)}
+              >
+                <Text style={styles.modalButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginBottom: 2,
+  },
+  item: {
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderBottomWidth: 1,
+    justifyContent: 'space-around',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 20,
+    flexDirection: 'row',
+    padding: 10,
+    height: 70,
   },
-  box: {
-    width: '90%',
-    height: 120,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  userItem: {
+  icon: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e8fa',
-    paddingVertical: 8,
   },
-  username: {
+  name: {
     fontSize: 16,
-    fontFamily: 'Inter',
-    color: '#1f4fc2',
+    width: 150,
   },
-  userId: {
-    fontSize: 14,
-    fontFamily: 'Inter',
-    color: '#777',
+  button: {
+    padding: 4,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20,
+  },
+  modalButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonCancel: {
+    backgroundColor: '#ccc',
+  },
+  modalButtonDelete: {
+    backgroundColor: '#f00',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
   },
 })
-
 export default Users

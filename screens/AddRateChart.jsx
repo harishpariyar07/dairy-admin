@@ -30,12 +30,13 @@ const AddRateChart = ({ route }) => {
   const [stdSNFRate, setStdSNFRate] = useState()
   const [stdTSRate, setStdTSRate] = useState()
   const [incentive, setIncentive] = useState()
-  const navigator = useNavigation()
+  const [isLoading, setIsLoading] = useState(false)
   const { username } = route.params
 
   const addRateChart = async () => {
     try {
       if (username) {
+        setIsLoading(true)
         const res = await axios.post(`${URL}admin/${username}/ratelist`, {
           category,
           level,
@@ -51,9 +52,11 @@ const AddRateChart = ({ route }) => {
         setStdFatRate()
         setStdSNFRate()
         setStdTSRate()
+        setIsLoading(false)
         alert('Rate Chart Saved Successfully')
       }
     } catch (error) {
+      setIsLoading(false)
       if (error.response) {
         console.log(error.response.data)
         alert(error.response.data)
@@ -111,6 +114,7 @@ const AddRateChart = ({ route }) => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='ENTER RATE CHART NAME'
           value={rateChartName}
           onChangeText={(name) => setRateChartName(name)}
@@ -120,6 +124,7 @@ const AddRateChart = ({ route }) => {
 
         {(category === 'KGFAT + KGSNF' || category === 'KG FAT ONLY') && (
           <TextInput
+            placeholderTextColor='black'
             label='ENTER STANDARD FAT RATE'
             value={stdFatRate && stdFatRate.toString()}
             onChangeText={(fat) => setStdFatRate(fat)}
@@ -132,6 +137,7 @@ const AddRateChart = ({ route }) => {
         {category === 'KGFAT + KGSNF' && (
           <View>
             <TextInput
+              placeholderTextColor='black'
               label='ENTER STANDARD SNF RATE'
               value={stdSNFRate && stdSNFRate.toString()}
               onChangeText={(snf) => setStdSNFRate(snf)}
@@ -140,6 +146,7 @@ const AddRateChart = ({ route }) => {
               keyboardType='numeric'
             />
             <TextInput
+              placeholderTextColor='black'
               label='ENTER TS RATE'
               value={stdTSRate && stdTSRate.toString()}
               onChangeText={(rate) => setStdTSRate(rate)}
@@ -151,6 +158,7 @@ const AddRateChart = ({ route }) => {
         )}
 
         <TextInput
+          placeholderTextColor='black'
           label='ENTER INCENTIVE'
           value={incentive && incentive.toString()}
           onChangeText={(i) => setIncentive(i)}
@@ -165,8 +173,9 @@ const AddRateChart = ({ route }) => {
         mode='contained'
         onPress={() => addRateChart()}
         style={styles.button}
+        disabled={isLoading}
       >
-        Save
+        {isLoading ? 'Saving...' : 'Save'}
       </Button>
     </SafeAreaView>
   )

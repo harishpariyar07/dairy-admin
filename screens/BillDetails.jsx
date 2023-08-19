@@ -54,6 +54,7 @@ const BillDetails = () => {
 
       <ScrollView>
         <TextInput
+          placeholderTextColor='black'
           label='Enter organization name'
           value={organizationName}
           onChangeText={(value) => setOrganizationName(value)}
@@ -62,6 +63,7 @@ const BillDetails = () => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Enter Contact Number 1'
           value={contactNumber1 && contactNumber1.toString()}
           onChangeText={(value) => setContactNumber1(value)}
@@ -71,6 +73,7 @@ const BillDetails = () => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Enter Contact Number 2'
           value={contactNumber2 && contactNumber2.toString()}
           onChangeText={(value) => setContactNumber2(value)}
@@ -80,6 +83,7 @@ const BillDetails = () => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Enter Address'
           value={address}
           onChangeText={(value) => setAddress(value)}
@@ -88,6 +92,7 @@ const BillDetails = () => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Enter PAN Number'
           value={panNumber && panNumber.toString()}
           onChangeText={(value) => setPanNumber(value)}
@@ -96,6 +101,7 @@ const BillDetails = () => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Enter Bill Title'
           value={billTitle}
           onChangeText={(value) => setBillTitle(value)}

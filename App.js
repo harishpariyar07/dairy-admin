@@ -24,16 +24,23 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import GenerateBill from './screens/GenerateBill';
 import BillDetails from './screens/BillDetails';
 import Bills from './screens/Bills';
+import EditCollection from './screens/EditCollection';
+import EditUser from './screens/EditUser';
+import EditPermissionsScreen from './screens/EditPremissionsScreen';
+import CollectionCenter from './screens/CollectionCenter';
 
 const screens = [
   { name: 'HomeScreen', component: HomeScreen },
   { name: 'Features', component: Features },
   { name: 'Users', component: Users },
+  { name: 'CollectionCenter', component: CollectionCenter },
+  { name: 'EditUser', component: EditUser },
   { name: 'AddFarmer', component: AddFarmer },
   { name: 'AddFarmerDetails', component: AddFarmerDetails },
   { name: 'EditFarmerDetails', component: EditFarmerDetails },
   { name: 'CollectMilk', component: CollectMilk },
   { name: 'AddCollection', component: AddCollection },
+  { name: 'EditCollection', component: EditCollection },
   { name: 'RateChart', component: RateChart },
   { name: 'AddRateChart', component: AddRateChart },
   { name: 'EditRateChart', component: EditRateChart },
@@ -45,6 +52,7 @@ const screens = [
   { name: 'BillDetails', component: BillDetails },
   { name: 'RegisterScreen', component: RegisterScreen },
   { name: 'PermissionsScreen', component: PermissionsScreen },
+  { name: 'EditPermissionsScreen', component: EditPermissionsScreen },
 ];
 
 const Stack = createNativeStackNavigator();

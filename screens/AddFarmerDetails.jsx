@@ -23,11 +23,10 @@ const paymentModeOptions = [
 
 const AddFarmerDetails = ({ route }) => {
   const [farmerId, setFarmerId] = useState(-1)
-  const [rfid, setRfId] = useState('')
   const [mobileNumber, setMobileNumber] = useState('')
   const [farmerName, setFarmerName] = useState('')
   const [farmerLevel, setFarmerLevel] = useState(null)
-  const [fixedRate, setFixedRate] = useState(0)
+  const [fixedRate, setFixedRate] = useState(null)
   const [paymentMode, setPaymentMode] = useState('')
   const [bankName, setBankName] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
@@ -36,6 +35,7 @@ const AddFarmerDetails = ({ route }) => {
   const [showDropDown2, setShowDropDown2] = useState(false)
   const navigator = useNavigation()
   const { username } = route.params
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchLatestFarmerId = async () => {
@@ -55,9 +55,9 @@ const AddFarmerDetails = ({ route }) => {
   const addFarmer = async () => {
     try {
       if (username) {
+        setIsLoading(true)
         const res = await axios.post(`${URL}admin/${username}/farmer`, {
           farmerId,
-          rfid,
           mobileNumber,
           farmerName,
           farmerLevel,
@@ -77,11 +77,12 @@ const AddFarmerDetails = ({ route }) => {
         setFixedRate(0)
         setMobileNumber('')
         setPaymentMode('')
-        setRfId('')
         setPaymentMode('')
+        setIsLoading(false)
         alert('Farmer Details Saved Successfully')
       }
     } catch (error) {
+      setIsLoading(false)
       alert('Error in saving farmer details')
       console.log(error)
     }
@@ -92,6 +93,7 @@ const AddFarmerDetails = ({ route }) => {
       <ScrollView>
         {farmerId >= 1 && (
           <TextInput
+            placeholderTextColor='black'
             label='Farmer ID'
             defaultValue={String(farmerId)}
             editable={false}
@@ -99,22 +101,17 @@ const AddFarmerDetails = ({ route }) => {
             style={styles.textInput}
           />
         )}
-
         <TextInput
-          label='RFID'
-          value={rfid}
-          onChangeText={(id) => setRfId(id)}
-          selectionColor='black'
-          style={styles.textInput}
-        />
-        <TextInput
+          placeholderTextColor='black'
           label='Mobile Number'
           value={mobileNumber}
           onChangeText={(num) => setMobileNumber(num)}
           selectionColor='black'
           style={styles.textInput}
+          keyboardType='numeric'
         />
         <TextInput
+          placeholderTextColor='black'
           label='Farmer Name'
           value={farmerName}
           onChangeText={(name) => setFarmerName(name)}
@@ -144,8 +141,9 @@ const AddFarmerDetails = ({ route }) => {
 
         {farmerLevel === 5 && (
           <TextInput
+            placeholderTextColor='black'
             label='Fixed Rate'
-            value={fixedRate.toString()}
+            value={fixedRate > 0 ? fixedRate.toString() : ''}
             onChangeText={(rate) => setFixedRate(rate)}
             selectionColor='black'
             style={styles.textInput}
@@ -175,6 +173,7 @@ const AddFarmerDetails = ({ route }) => {
         />
 
         <TextInput
+          placeholderTextColor='black'
           label='Bank Name'
           value={bankName}
           onChangeText={(name) => setBankName(name)}
@@ -182,6 +181,7 @@ const AddFarmerDetails = ({ route }) => {
           style={styles.textInput}
         />
         <TextInput
+          placeholderTextColor='black'
           label='Bank Account Number'
           value={accountNumber}
           onChangeText={(acc) => setAccountNumber(acc)}
@@ -189,6 +189,7 @@ const AddFarmerDetails = ({ route }) => {
           style={styles.textInput}
         />
         <TextInput
+          placeholderTextColor='black'
           label='Bank Holder Name'
           value={bankHolderName}
           onChangeText={(name) => setBankHolderName(name)}
@@ -202,8 +203,9 @@ const AddFarmerDetails = ({ route }) => {
         mode='contained'
         onPress={() => addFarmer()}
         style={styles.button}
+        disabled={isLoading}
       >
-        Save
+        {isLoading ? 'Saving...' : 'Save'}
       </Button>
     </SafeAreaView>
   )

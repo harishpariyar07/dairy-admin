@@ -1,6 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { SafeAreaView } from 'react-native'
 import { Table, Row } from 'react-native-table-component'
 import axios from 'axios'
 import { URL } from '@env'
@@ -34,24 +33,24 @@ const Dues = ({ route }) => {
   }, [])
 
   const tableHead = [
-    { label: 'Farmer Id', width: 100 },
-    { label: 'Farmer Name', width: 130 },
-    { label: 'Net Balance', width: 100 },
+    { label: 'Farmer Id', flex: 0.2 },
+    { label: 'Farmer Name', flex: 0.5 },
+    { label: 'Net Balance', flex: 0.3 },
   ]
   const tableData = data.map((item) => {
     return [item.farmerId, item.farmerName, item.netBalance]
   })
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.tableCnt}>
+    <View style={styles.container}>
+      <Row
+        data={tableHead.map((header) => header.label)}
+        flexArr={tableHead.map((header) => header.flex)}
+        style={styles.head}
+        textStyle={styles.headText}
+      />
+      <ScrollView style={styles.tableCnt}>
         <Table style={styles.table}>
-          <Row
-            data={tableHead.map((header) => header.label)}
-            widthArr={tableHead.map((header) => header.width)}
-            style={styles.head}
-            textStyle={styles.headText}
-          />
           {tableData.map((rowData, index) => (
             <Row
               key={index}
@@ -62,42 +61,48 @@ const Dues = ({ route }) => {
                 index === 0 && styles.firstRow,
               ]}
               textStyle={styles.text}
-              widthArr={tableHead.map((header) => header.width)}
+              flexArr={tableHead.map((header) => header.flex)}
             />
           ))}
         </Table>
-      </View>
+      </ScrollView>
 
       <View style={styles.btnCnt}>
         <Text style={styles.totalAmt}>TOTAL AMOUNT : {totalBalance}</Text>
       </View>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tableCnt: {
+    flex: 1,
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    borderBottomColor: 'gray',
   },
   table: {
     width: '100%',
   },
   head: {
-    height: 30,
     backgroundColor: '#6987d0',
+    padding: 15,
   },
   headText: {
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'InterB',
   },
   row: {
-    height: 45,
     borderBottomWidth: 1,
     borderColor: '#ccc',
+    padding: 5,
   },
   evenRow: {
     backgroundColor: '#f9f9f9',
@@ -108,11 +113,8 @@ const styles = StyleSheet.create({
   text: {
     margin: 6,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'Inter',
-  },
-  tableCnt: {
-    flex: 5,
   },
   totalAmt: {
     fontFamily: 'Inter',
@@ -122,7 +124,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   btnCnt: {
-    flex: 0.85,
+    flex: 0.1,
     width: '90%',
   },
 })
