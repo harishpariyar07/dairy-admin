@@ -62,11 +62,7 @@ const EditPermissionsScreen = ({ route }) => {
         mobileNo,
         contactPerson,
         address,
-        allowAddFarmer,
-        allowRateChart,
-        allowPayment,
-        allowDues,
-        allowLedger,
+        permissions: { allowAddFarmer, allowRateChart, allowPayment, allowDues, allowLedger },
       })
       alert('User updated successfully')
       navigation.navigate('Users')

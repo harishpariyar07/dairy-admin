@@ -8,11 +8,13 @@ const Dues = ({ route }) => {
   const [data, setData] = useState([])
   const [totalBalance, setTotalBalance] = useState(0)
   const { username } = route.params
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const fetchAllFarmers = async () => {
       try {
         if (username) {
+          setIsLoading(true)
           const dues = await axios.get(`${URL}admin/${username}/dues`)
           const duesArray = dues.data.map((due) => ({
             farmerName: due.farmerName,
@@ -22,9 +24,11 @@ const Dues = ({ route }) => {
 
           setData(duesArray)
           const total = duesArray.reduce((acc, item) => acc + parseFloat(item.netBalance), 0)
-          setTotalBalance(total)
+          setTotalBalance(total.toFixed(2))
+          setIsLoading(false)
         }
       } catch (error) {
+        setIsLoading(false)
         console.log(error)
       }
     }
@@ -49,22 +53,36 @@ const Dues = ({ route }) => {
         style={styles.head}
         textStyle={styles.headText}
       />
+      {isLoading && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>Loading Farmer Dues...</Text>
+        </View>
+      )}
+
+      {isLoading === false && tableData.length === 0 && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>No Farmers Found</Text>
+        </View>
+      )}
+
       <ScrollView style={styles.tableCnt}>
-        <Table style={styles.table}>
-          {tableData.map((rowData, index) => (
-            <Row
-              key={index}
-              data={rowData}
-              style={[
-                styles.row,
-                index % 2 === 0 && styles.evenRow,
-                index === 0 && styles.firstRow,
-              ]}
-              textStyle={styles.text}
-              flexArr={tableHead.map((header) => header.flex)}
-            />
-          ))}
-        </Table>
+        {isLoading === false && tableData.length > 0 && (
+          <Table style={styles.table}>
+            {tableData.map((rowData, index) => (
+              <Row
+                key={index}
+                data={rowData}
+                style={[
+                  styles.row,
+                  index % 2 === 0 && styles.evenRow,
+                  index === 0 && styles.firstRow,
+                ]}
+                textStyle={styles.text}
+                flexArr={tableHead.map((header) => header.flex)}
+              />
+            ))}
+          </Table>
+        )}
       </ScrollView>
 
       <View style={styles.btnCnt}>

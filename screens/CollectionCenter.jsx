@@ -59,23 +59,27 @@ const CollectionCenter = ({ navigation }) => {
       <View
         style={{
           flex: 1,
-          flexDirection: 'row',
-          alignItems: 'center',
         }}
       >
-        <Text style={[styles.username, { flex: 1 }]} sty>
-          {item.contactPerson}
-        </Text>
         <View
           style={{
             flex: 1,
-            flexDirection: 'column',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          <Text style={styles.userId}>User ID: {item.userId}</Text>
-          <Text style={styles.userId}>Farmers: {farmersCount[item.username] || 0}</Text>
-          <Text style={styles.userId}>Username: {item.username}</Text>
-          <Text style={styles.userId}>Address: {item.address}</Text>
+          <Text style={styles.username}>{item.contactPerson}</Text>
+        </View>
+        <View
+          style={{
+            flex: 1,
+          }}
+        >
+          <Text style={styles.userId}>- UserId: {item.userId}</Text>
+          <Text style={styles.userId}>- Farmers: {farmersCount[item.username] || 0}</Text>
+          <Text style={styles.userId}>- Username: {item.username}</Text>
+          <Text style={styles.userId}>- Address: {item.address}</Text>
         </View>
       </View>
     </TouchableOpacity>

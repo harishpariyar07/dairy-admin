@@ -22,8 +22,8 @@ const windowWidth = Dimensions.get('window').width
 
 const tableHead = [
   { label: '#', width: 0.1 * windowWidth },
-  { label: 'Name', width: 0.3 * windowWidth },
   { label: 'Id', width: 0.1 * windowWidth },
+  { label: 'Name', width: 0.3 * windowWidth },
   { label: 'Qty', width: 0.1 * windowWidth },
   { label: 'Fat', width: 0.1 * windowWidth },
   { label: 'Snf', width: 0.1 * windowWidth },
@@ -40,7 +40,7 @@ const CollectMilk = ({ route }) => {
   )
   const [tableData, setTableDate] = useState([])
   const [search, setSearch] = useState('')
-  const [filteredTableData, setFilteredTableData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const navigator = useNavigation()
   const { username } = route.params
   const [selectedOption, setSelectedOption] = useState(date.getTime() < 12 ? 'Morning' : 'Evening')
@@ -49,12 +49,15 @@ const CollectMilk = ({ route }) => {
     const fetchCollections = async () => {
       try {
         if (username) {
+          setIsLoading(true)
           const collections = await axios.get(
             `${URL}admin/${username}/collection?date=${date}&shift=${selectedOption}`
           )
           setTableDate(collections.data)
+          setIsLoading(false)
         }
       } catch (error) {
+        setIsLoading(false)
         console.log(error)
       }
     }
@@ -95,8 +98,8 @@ const CollectMilk = ({ route }) => {
         onPress={() => {
           const dateStringToPass = date.toISOString()
           navigator.navigate('EditCollection', {
-            username,
             id,
+            username,
             farmerId,
             farmerName,
             qty,
@@ -109,10 +112,10 @@ const CollectMilk = ({ route }) => {
           })
         }}
       />
+      <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{farmerId}</Text>
       <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 5 }}>
         {farmerName}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{farmerId}</Text>
       <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{qty}</Text>
       <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{fat}</Text>
       <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{snf}</Text>
@@ -127,9 +130,6 @@ const CollectMilk = ({ route }) => {
           placeholder='Search by name'
           onChangeText={(e) => {
             setSearch(e)
-            setFilteredTableData(
-              tableData.filter((row) => row[0].toLowerCase().includes(e.toLowerCase()))
-            )
           }}
           value={search}
           style={styles.searchBar}
@@ -203,24 +203,38 @@ const CollectMilk = ({ route }) => {
           text
         />
 
-        <FlatList
-          data={tableData.filter(({ farmerName }) =>
-            farmerName.toLowerCase().includes(search.toLowerCase())
-          )}
-          renderItem={({ item }) => (
-            <Item
-              farmerId={item.farmerId}
-              farmerName={item.farmerName}
-              qty={item.qty}
-              fat={item.fat}
-              snf={item.snf}
-              amount={item.amount}
-              id={item._id}
-              rate={item.rate}
-            />
-          )}
-          keyExtractor={(item) => item._id}
-        />
+        {isLoading && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>Loading Collections...</Text>
+          </View>
+        )}
+
+        {isLoading === false && tableData.length === 0 && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>No Collections Found</Text>
+          </View>
+        )}
+
+        {isLoading === false && tableData.length > 0 && (
+          <FlatList
+            data={tableData.filter(({ farmerName }) =>
+              farmerName.toLowerCase().includes(search.toLowerCase())
+            )}
+            renderItem={({ item }) => (
+              <Item
+                farmerId={item.farmerId}
+                farmerName={item.farmerName}
+                qty={item.qty}
+                fat={item.fat}
+                snf={item.snf}
+                amount={item.amount}
+                id={item._id}
+                rate={item.rate}
+              />
+            )}
+            keyExtractor={(item) => item._id}
+          />
+        )}
       </View>
 
       <HideWithKeyboard style={styles.container3}>
@@ -242,14 +256,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   },
   upperContainer: {
-    flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
     width: '100%',
+    marginBottom: 10,
   },
   iconButtonContainer: {
     flex: 0.6,
@@ -288,7 +302,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    padding: 10,
   },
   text: {
     margin: 6,
@@ -309,24 +322,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shareButton: {
-    width: '90%',
-    height: 50,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   searchBar: {
     width: '90%',
-    margin: 10,
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
   },
   container1: {
-    flex: 1,
     width: '100%',
-    justifyContent: 'center',
+    margin: 10,
     alignItems: 'center',
   },
   container3: {
@@ -338,10 +342,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   container2: {
-    flex: 3.8,
+    flex: 8,
     width: windowWidth,
     borderBottomWidth: 1,
     borderBottomColor: 'gray',
+    marginBottom: 20,
   },
 
   // This only works on iOS

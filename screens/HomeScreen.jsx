@@ -65,7 +65,7 @@ const HomeScreen = () => {
       const res = await axios.get(
         `${URL}admin/collection/avgfat?start=${startOfDay}&end=${endOfDay}`
       )
-      setAvgFat((res.data.length && res.data[0].averageFat.toFixed(2)) || 0)
+      setAvgFat(res.data || 0)
     } catch (error) {
       console.log(error)
     }
@@ -76,7 +76,7 @@ const HomeScreen = () => {
       const res = await axios.get(
         `${URL}admin/collection/avgsnf?start=${startOfDay}&end=${endOfDay}`
       )
-      setAvgSNF((res.data.length && res.data[0].averageSNF.toFixed(2)) || 0)
+      setAvgSNF(res.data || 0)
     } catch (error) {
       console.log(error)
     }

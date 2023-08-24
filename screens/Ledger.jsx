@@ -29,6 +29,7 @@ const Ledger = ({ route }) => {
     `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
@@ -48,6 +49,7 @@ const Ledger = ({ route }) => {
     const fetchLedger = async () => {
       try {
         if (username) {
+          setIsLoading(true)
           const ledger = await axios.get(
             `${URL}admin/${username}/ledger?startDate=${startDate}&endDate=${endDate}`
           )
@@ -61,8 +63,10 @@ const Ledger = ({ route }) => {
 
           setTableData(ledgerArray)
           setFilteredTableData(ledgerArray)
+          setIsLoading(false)
         }
       } catch (error) {
+        setIsLoading(false)
         console.log(error)
       }
     }
@@ -167,23 +171,38 @@ const Ledger = ({ route }) => {
           style={styles.head}
           textStyle={styles.headText}
         />
-        <ScrollView>
-          <Table style={styles.table}>
-            {(search === '' ? tableData : filteredTableData).map((rowData, index) => (
-              <Row
-                key={index}
-                data={rowData}
-                style={[
-                  styles.row,
-                  index % 2 === 0 && styles.evenRow,
-                  index === 0 && styles.firstRow,
-                ]}
-                textStyle={styles.text}
-                flexArr={tableHead.map((header) => header.flex)}
-              />
-            ))}
-          </Table>
-        </ScrollView>
+
+        {isLoading && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>Loading Ledgers...</Text>
+          </View>
+        )}
+
+        {isLoading === false && tableData.length === 0 && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>No Ledgers Found</Text>
+          </View>
+        )}
+
+        {isLoading === false && tableData.length > 0 && (
+          <ScrollView>
+            <Table style={styles.table}>
+              {(search === '' ? tableData : filteredTableData).map((rowData, index) => (
+                <Row
+                  key={index}
+                  data={rowData}
+                  style={[
+                    styles.row,
+                    index % 2 === 0 && styles.evenRow,
+                    index === 0 && styles.firstRow,
+                  ]}
+                  textStyle={styles.text}
+                  flexArr={tableHead.map((header) => header.flex)}
+                />
+              ))}
+            </Table>
+          </ScrollView>
+        )}
       </View>
     </KeyboardAvoidingView>
   )

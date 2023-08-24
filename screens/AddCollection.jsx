@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
-import { Searchbar, Button, TextInput } from 'react-native-paper'
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { Searchbar, Button, TextInput, IconButton } from 'react-native-paper'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import { URL } from '@env'
-
+import { useAuth } from '../context/AuthContext'
 import { FlatList } from 'react-native'
+import { Row } from 'react-native-table-component'
+const windowWidth = Dimensions.get('window').width
+
+const tableHead = [
+  { label: 'Id', width: 0.2 * windowWidth },
+  { label: 'Name', width: 0.4 * windowWidth },
+  { label: 'Level', width: 0.3 * windowWidth },
+]
+
+const tableHeadWidthArr = tableHead.map((header) => header.width)
 
 const AddCollection = ({ route }) => {
   const [totalAmt, setTotalAmt] = useState(0)
@@ -15,32 +25,32 @@ const AddCollection = ({ route }) => {
   const [snf, setSnf] = useState(null)
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
-  const [farmerData, setFarmerData] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const { username } = route.params
+  const [filteredData, setFilteredData] = useState([])
+  const [selectedOption, setSelectedOption] = useState('ID')
+  const [isLoadingFarmer, setIsLoadingFarmer] = useState(true)
 
-  const { dateString, username, shift } = route.params
+  const { dateString, shift } = route.params
   const date = new Date(dateString)
 
   useEffect(() => {
     const fetchAllFarmers = async () => {
       try {
         if (username) {
+          setIsLoadingFarmer(true)
           const farmers = await axios.get(`${URL}admin/${username}/farmer`)
           const farmersArray = farmers.data.map((farmer) => ({
-            farmerName: farmer.farmerName,
-            farmerId: farmer.farmerId,
-          }))
-
-          const farmerData = farmers.data.map((farmer) => ({
             farmerName: farmer.farmerName,
             farmerId: farmer.farmerId,
             farmerLevel: farmer.farmerLevel,
           }))
 
-          setFarmerData(farmerData)
+          setIsLoadingFarmer(false)
           setData(farmersArray)
         }
       } catch (error) {
+        setIsLoadingFarmer(false)
         console.log(error)
       }
     }
@@ -90,21 +100,59 @@ const AddCollection = ({ route }) => {
     }
   }
 
-  const Item = ({ farmerId, farmerName, farmerLevel }) => (
-    <View style={styles.item}>
-      <Text>{farmerId}</Text>
-      <Text style={{ marginRight: 5 }}>{farmerName}</Text>
-      <Text style={{ marginRight: 10 }}>{farmerLevel}</Text>
-    </View>
+  const Farmer = ({ farmerName, farmerId }) => (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => {
+        setFilteredData(data.filter((item) => item.farmerId === farmerId))
+        if (selectedOption === 'ID') {
+          setSearch(String(farmerId))
+        } else {
+          setSearch(String(farmerName))
+        }
+      }}
+    >
+      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+        {farmerId}
+      </Text>
+      <Text
+        style={{
+          width: 0.6 * windowWidth,
+          textAlign: 'left',
+          padding: 5,
+          fontWeight: 'bold',
+        }}
+      >
+        {farmerName}
+      </Text>
+    </TouchableOpacity>
   )
-
-  const filteredData = data.filter((item) => String(item.farmerId).includes(search))
 
   return (
     <SafeAreaView style={styles.container}>
+      {search === '' && (
+        <View style={styles.iconButtonContainer}>
+          <TouchableOpacity
+            style={[styles.iconButton, selectedOption === 'ID' && styles.selectedOption]}
+            onPress={() => {
+              setSelectedOption('ID')
+            }}
+          >
+            <Text style={{ color: '#000', fontWeight: 'bold' }}>ID</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.iconButton, selectedOption === 'NAME' && styles.selectedOption]}
+            onPress={() => setSelectedOption('NAME')}
+          >
+            <Text style={{ color: '#000', fontWeight: 'bold' }}>NAME</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Searchbar
         style={styles.search}
-        placeholder='Search by Farmer ID'
+        placeholder='Search'
         onChangeText={(text) => {
           setSearch(text)
           setQty(0)
@@ -112,24 +160,25 @@ const AddCollection = ({ route }) => {
           setSnf(0)
           setTotalAmt(0)
           setRate(0)
+          if (selectedOption === 'ID') {
+            setFilteredData(data.filter((item) => String(item.farmerId) === text))
+          }
         }}
         value={search}
-        keyboardType='numeric'
+        keyboardType={selectedOption === 'ID' ? 'numeric' : 'default'}
       />
 
-      {filteredData.length > 0 && search.length === String(filteredData[0].farmerId).length ? (
+      {filteredData.length > 0 && search !== '' ? (
         filteredData.map((item, index) => (
           <View style={styles.farmerDetails} key={index}>
             <View style={{ flexDirection: 'row', padding: 10 }}>
               <Text style={{ color: 'red', fontFamily: 'InterB' }}>FARMER NAME: </Text>
-              <Text>{item.farmerName}</Text>
+              <Text style={{ fontSize: 15, fontWeight: 'bold' }}>{item.farmerName}</Text>
             </View>
-
             <View style={{ flexDirection: 'row', padding: 10 }}>
               <Text style={{ color: 'red', fontFamily: 'InterB' }}>FARMER ID: </Text>
-              <Text>{item.farmerId}</Text>
+              <Text style={{ fontSize: 15, fontWeight: 'bold' }}>{item.farmerId}</Text>
             </View>
-
             <Text style={styles.amountRateText}>
               Total Amount: <Text style={styles.amountText}>{totalAmt}</Text> Rate:{' '}
               <Text style={styles.rateText}>{rate}</Text>
@@ -181,7 +230,6 @@ const AddCollection = ({ route }) => {
                 keyboardType='numeric'
               />
             </View>
-
             <Button
               style={styles.button}
               icon='plus'
@@ -199,25 +247,25 @@ const AddCollection = ({ route }) => {
           </View>
         ))
       ) : (
-        <SafeAreaView style={styles.container2}>
-          <View style={styles.head}>
-            <Text style={[styles.headText]}>Id</Text>
-            <Text style={[styles.headText]}>Name</Text>
-            <Text style={[styles.headText]}>Level</Text>
-          </View>
+        <View>
+          {isLoadingFarmer && (
+            <View style={{ flex: 1, top: 150, alignItems: 'center' }}>
+              <Text style={{ fontSize: 20 }}>Loading Farmers...</Text>
+            </View>
+          )}
 
-          <FlatList
-            data={farmerData}
-            renderItem={({ item }) => (
-              <Item
-                farmerId={item.farmerId}
-                farmerName={item.farmerName}
-                farmerLevel={item.farmerLevel}
-              />
-            )}
-            keyExtractor={(item) => item.farmerId}
-          />
-        </SafeAreaView>
+          {!isLoadingFarmer && (
+            <FlatList
+              data={data.filter(({ farmerName }) =>
+                farmerName.toLowerCase().includes(search.toLowerCase())
+              )}
+              renderItem={({ item }) => (
+                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
+              )}
+              keyExtractor={(item) => item._id}
+            />
+          )}
+        </View>
       )}
     </SafeAreaView>
   )
@@ -227,19 +275,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    top: 40,
+    top: 10,
     gap: 20,
-  },
-  container2: {
-    flex: 1,
-    marginBottom: 2,
-    width: '100%',
   },
   search: {
     width: '90%',
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
+  },
+  iconButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+  },
+  iconButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'gray',
+  },
+  selectedOption: {
+    backgroundColor: '#6987d0',
   },
   farmerDetails: {
     width: '90%',
@@ -278,6 +338,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     padding: 10,
+    borderRadius: 10,
+    margin: 5,
   },
   head: {
     height: 40,
