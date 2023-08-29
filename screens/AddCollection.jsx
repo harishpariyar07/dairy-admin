@@ -162,6 +162,10 @@ const AddCollection = ({ route }) => {
           setRate(0)
           if (selectedOption === 'ID') {
             setFilteredData(data.filter((item) => String(item.farmerId) === text))
+          } else {
+            if (text === '') {
+              setFilteredData([])
+            }
           }
         }}
         value={search}

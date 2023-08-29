@@ -6,6 +6,7 @@ import { Button, IconButton, TextInput } from 'react-native-paper'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import moment from 'moment'
+import { useNavigation } from '@react-navigation/native'
 
 const EditCollection = ({ route }) => {
   const { username, id } = route.params
@@ -20,6 +21,7 @@ const EditCollection = ({ route }) => {
   const [selectedOption, setSelectedOption] = useState(route.params.shift)
   const [isPickerShow, setIsPickerShow] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const navigator = useNavigation()
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -62,6 +64,7 @@ const EditCollection = ({ route }) => {
         if (collectionResponse) {
           setIsLoading(false)
           alert('Collection Updated Successfully')
+          navigator.goBack()
         }
       }
     } catch (err) {

@@ -68,6 +68,7 @@ const Payments = ({ route }) => {
         alert('Payment added successfully')
       }
     } catch (error) {
+      navigator.goBack()
       console.log(error)
     }
   }

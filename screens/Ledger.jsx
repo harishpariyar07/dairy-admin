@@ -29,10 +29,14 @@ const Ledger = ({ route }) => {
     `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableData] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [farmersMap, setFarmersMap] = useState({})
+  const [farmerName, setFarmerName] = useState('No Farmer')
+  const [previousBalance, setPreviousBalance] = useState(0)
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
+
+  const [filteredTableData, setFilteredTableData] = useState([])
 
   // FOR TABLE
   const tableHead = [
@@ -45,11 +49,40 @@ const Ledger = ({ route }) => {
 
   const { username } = route.params
 
+  const fetchAllFarmers = async () => {
+    try {
+      if (username) {
+        const farmers = await axios.get(`${URL}admin/${username}/farmer`)
+        const farmersArray = farmers.data.map((farmer) => ({
+          farmerName: farmer.farmerName,
+          farmerId: farmer.farmerId,
+        }))
+
+        const farmersMap = farmersArray.reduce((acc, farmer) => {
+          acc[farmer.farmerId] = farmer.farmerName
+          return acc
+        }, {})
+        setFarmersMap(farmersMap)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    try {
+      if (username) {
+        fetchAllFarmers()
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }, [])
+
   useEffect(() => {
     const fetchLedger = async () => {
       try {
         if (username) {
-          setIsLoading(true)
           const ledger = await axios.get(
             `${URL}admin/${username}/ledger?startDate=${startDate}&endDate=${endDate}`
           )
@@ -60,13 +93,9 @@ const Ledger = ({ route }) => {
             ledger.debit,
             ledger.remarks,
           ])
-
           setTableData(ledgerArray)
-          setFilteredTableData(ledgerArray)
-          setIsLoading(false)
         }
       } catch (error) {
-        setIsLoading(false)
         console.log(error)
       }
     }
@@ -74,7 +103,30 @@ const Ledger = ({ route }) => {
     fetchLedger()
   }, [startDate, endDate])
 
-  const [filteredTableData, setFilteredTableData] = useState([])
+  const fetchPreviousBalance = async (farmerId) => {
+    try {
+      if (username) {
+        const res = await axios.get(
+          `${URL}admin/${username}/dues/${farmerId}/prev?startDate=${startDate}&endDate=${endDate}`
+        )
+        console.log(res.data)
+        setPreviousBalance(res.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    if (search !== '') {
+      if (farmersMap[search - '0']) {
+        setFarmerName(farmersMap[search - '0'])
+        fetchPreviousBalance(search - '0')
+      }
+    } else {
+      setFarmerName('No Farmer')
+    }
+  }, [search])
 
   const showPicker1 = () => {
     setIsPickerShow1(true)
@@ -107,7 +159,6 @@ const Ledger = ({ route }) => {
         <View style={styles.dateWrapper}>
           <Text style={[styles.dateText, { fontSize: 16 }]}>From</Text>
 
-          {/* <HideWithKeyboard style={styles.calender}> */}
           {!isPickerShow1 && (
             <View style={styles.btnContainer}>
               <Button mode='text' icon='calendar-today' onPress={showPicker1}>
@@ -126,11 +177,9 @@ const Ledger = ({ route }) => {
               style={styles.datePicker}
             />
           )}
-          {/* </HideWithKeyboard> */}
 
           <Text style={[styles.dateText, { fontSize: 16 }]}>To</Text>
 
-          {/* <HideWithKeyboard style={styles.calender}> */}
           {!isPickerShow2 && (
             <View style={styles.btnContainer}>
               <Button mode='text' icon='calendar-today' onPress={showPicker2}>
@@ -149,7 +198,6 @@ const Ledger = ({ route }) => {
               style={styles.datePicker}
             />
           )}
-          {/* </HideWithKeyboard> */}
         </View>
       </View>
 
@@ -164,45 +212,56 @@ const Ledger = ({ route }) => {
         keyboardType='numeric'
       />
 
-      <View style={styles.tableContainer}>
-        <Row
-          data={tableHead.map((header) => header.label)}
-          flexArr={tableHead.map((header) => header.flex)}
-          style={styles.head}
-          textStyle={styles.headText}
-        />
+      <View>
+        <Text style={{ fontSize: 20, paddingLeft: 10, color: 'black', fontWeight: 'bold' }}>
+          {farmerName}
+        </Text>
+      </View>
 
-        {isLoading && (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ fontSize: 20 }}>Loading Ledgers...</Text>
-          </View>
-        )}
+      <Row
+        data={tableHead.map((header) => header.label)}
+        flexArr={tableHead.map((header) => header.flex)}
+        style={styles.head}
+        textStyle={styles.headText}
+      />
 
-        {isLoading === false && tableData.length === 0 && (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ fontSize: 20 }}>No Ledgers Found</Text>
-          </View>
-        )}
+      {search === '' && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>Please Search by Id</Text>
+        </View>
+      )}
 
-        {isLoading === false && tableData.length > 0 && (
-          <ScrollView>
-            <Table style={styles.table}>
-              {(search === '' ? tableData : filteredTableData).map((rowData, index) => (
-                <Row
-                  key={index}
-                  data={rowData}
-                  style={[
-                    styles.row,
-                    index % 2 === 0 && styles.evenRow,
-                    index === 0 && styles.firstRow,
-                  ]}
-                  textStyle={styles.text}
-                  flexArr={tableHead.map((header) => header.flex)}
-                />
-              ))}
-            </Table>
-          </ScrollView>
-        )}
+      {search !== '' && filteredTableData.length === 0 && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>No Ledger Found</Text>
+        </View>
+      )}
+
+      {search !== '' && filteredTableData.length > 0 && (
+        <ScrollView
+          style={[styles.tableContainer, filteredTableData.length === 0 && { borderWidth: 0 }]}
+        >
+          <Table style={styles.table}>
+            {filteredTableData.map((rowData, index) => (
+              <Row
+                key={index}
+                data={rowData}
+                style={[
+                  styles.row,
+                  index % 2 === 0 && styles.evenRow,
+                  index === 0 && styles.firstRow,
+                ]}
+                textStyle={styles.text}
+                flexArr={tableHead.map((header) => header.flex)}
+              />
+            ))}
+          </Table>
+        </ScrollView>
+      )}
+
+      <View style={styles.bottomContainer}>
+        <Text style={styles.bottomText}>Remaining Balance</Text>
+        <Text style={styles.bottomBalanceText}>रु॰ {previousBalance}</Text>
       </View>
     </KeyboardAvoidingView>
   )
@@ -237,13 +296,18 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   searchBar: {
-    margin: 10,
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
+    marginLeft: 10,
+    marginRight: 10,
   },
 
   tableContainer: {
+    marginLeft: 10,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#6987d0',
     flex: 1,
   },
 
@@ -252,7 +316,12 @@ const styles = StyleSheet.create({
   },
   head: {
     backgroundColor: '#6987d0',
-    padding: 15,
+    padding: 10,
+    marginLeft: 10,
+    marginRight: 10,
+    marginTop: 10,
+    borderWidth: 2,
+    borderColor: '#6987d0',
   },
   headText: {
     color: '#fff',
@@ -267,7 +336,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   evenRow: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   firstRow: {
     borderTopWidth: 1,
@@ -277,6 +346,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter',
+  },
+
+  bottomContainer: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    paddingLeft: 10,
+  },
+
+  bottomText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+
+  bottomBalanceText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'red',
   },
 })
 
