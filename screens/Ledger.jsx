@@ -7,13 +7,15 @@ import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
+import NepaliDate from 'nepali-date-converter'
 
-function formatDate(date) {
-  const formattedDate = new Date(date)
-  const year = formattedDate.getFullYear()
-  const month = String(formattedDate.getMonth() + 1).padStart(2, '0')
-  const day = String(formattedDate.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
+const formatDate = (dateInAd) => {
+  const dateInBS = new NepaliDate(new Date(dateInAd))
+  const year = dateInBS.getYear()
+  const month = dateInBS.getMonth()+1
+  const day = dateInBS.getDate()
+  const formattedDate = `${year}-${month}-${day}`
+  return formattedDate
 }
 
 const Ledger = ({ route }) => {
@@ -31,7 +33,9 @@ const Ledger = ({ route }) => {
   const [tableData, setTableData] = useState([])
   const [farmersMap, setFarmersMap] = useState({})
   const [farmerName, setFarmerName] = useState('No Farmer')
-  const [previousBalance, setPreviousBalance] = useState(0)
+  const [remainingBalance, setRemainingBalance] = useState(0)
+  const [previousBalanceRow, setPreviousBalanceRow] = useState(['Prev Balance', 0, 0, 'Purano Baki'])
+  const [loading, setLoading] = useState(false)
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
@@ -40,10 +44,9 @@ const Ledger = ({ route }) => {
 
   // FOR TABLE
   const tableHead = [
-    { label: 'Id', flex: 0.1 },
     { label: 'Date', flex: 0.25 },
-    { label: 'Credit', flex: 0.2 },
-    { label: 'Debit', flex: 0.2 },
+    { label: 'Credit', flex: 0.25 },
+    { label: 'Debit', flex: 0.25 },
     { label: 'Remarks', flex: 0.25 },
   ]
 
@@ -80,53 +83,97 @@ const Ledger = ({ route }) => {
   }, [])
 
   useEffect(() => {
-    const fetchLedger = async () => {
-      try {
-        if (username) {
-          const ledger = await axios.get(
-            `${URL}admin/${username}/ledger?startDate=${startDate}&endDate=${endDate}`
-          )
-          const ledgerArray = ledger.data.map((ledger) => [
-            ledger.farmerId,
-            formatDate(ledger.date),
-            ledger.credit,
-            ledger.debit,
-            ledger.remarks,
-          ])
-          setTableData(ledgerArray)
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
     fetchLedger()
+    if (search != '')
+    {
+      setFilteredTableData(tableData.filter((row) => row[0] == search))
+    }
   }, [startDate, endDate])
 
-  const fetchPreviousBalance = async (farmerId) => {
+  useEffect(() => {
+    if (filteredTableData.length > 0)
+    {
+      const newPreviousBalanceRow = previousBalanceRow
+      if (filteredTableData[0][1] >= 0) newPreviousBalanceRow[1] = filteredTableData[0][1]
+      else newPreviousBalanceRow[1] = 0
+      if (filteredTableData[0][1] < 0) newPreviousBalanceRow[2] = filteredTableData[0][1]
+      else newPreviousBalanceRow[2] = 0
+      setPreviousBalanceRow(newPreviousBalanceRow)
+    }
+    else
+    {
+      makePreviousBalanceZero()
+    }
+  }, [filteredTableData])
+
+  useEffect(() => {
+    if (search !== '') {
+      if (farmersMap[search - '0']) {
+        setFarmerName(farmersMap[search - '0'])
+        fetchBalances(search - '0')
+      }
+      else
+      {
+        makePreviousBalanceZero()
+      }
+    }
+    else
+    {
+      makePreviousBalanceZero()
+    }
+
+    setFilteredTableData(tableData.filter((row) => row[0] == search));
+  }, [search, startDate, endDate, tableData])
+
+  const fetchLedger = async () => {
+    try {
+      if (username) {
+        setLoading(true)
+        const ledger = await axios.get(
+          `${URL}admin/${username}/ledger?startDate=${startDate}&endDate=${endDate}`
+        )
+        const ledgerArray = ledger.data.map((ledger) => [
+          ledger.farmerId,
+          ledger.previousBalance,
+          formatDate(ledger.date),
+          ledger.credit,
+          ledger.debit,
+          ledger.remarks,
+        ])
+        setLoading(false)
+        setTableData(ledgerArray)
+      }
+    } catch (error) {
+      setLoading(false)
+      console.log(error)
+    }
+  }
+
+  const fetchBalances = async (farmerId) => {
     try {
       if (username) {
         const res = await axios.get(
-          `${URL}admin/${username}/dues/${farmerId}/prev?startDate=${startDate}&endDate=${endDate}`
+          `${URL}admin/${username}/farmer/${farmerId}`
         )
-        console.log(res.data)
-        setPreviousBalance(res.data)
+
+        if (res.data)
+        {
+          setRemainingBalance(res.data.credit - res.data.debit)
+        }
       }
     } catch (error) {
       console.log(error)
     }
   }
 
-  useEffect(() => {
-    if (search !== '') {
-      if (farmersMap[search - '0']) {
-        setFarmerName(farmersMap[search - '0'])
-        fetchPreviousBalance(search - '0')
-      }
-    } else {
+  const makePreviousBalanceZero = () => {
       setFarmerName('No Farmer')
-    }
-  }, [search])
+      setRemainingBalance(0)
+      const newPreviousBalanceRow = previousBalanceRow
+      newPreviousBalanceRow[1] = 0
+      newPreviousBalanceRow[2] = 0
+      setPreviousBalanceRow(newPreviousBalanceRow)
+  }
 
   const showPicker1 = () => {
     setIsPickerShow1(true)
@@ -225,32 +272,55 @@ const Ledger = ({ route }) => {
         textStyle={styles.headText}
       />
 
-      {search === '' && (
+      <Row
+        data={previousBalanceRow}
+        style={[
+          styles.row,
+          styles.evenRow,
+          { marginHorizontal: 10 },
+          filteredTableData.length > 0 && {
+            borderLeftWidth: 2,
+            borderRightWidth: 2,
+            borderBottomWidth: 0,
+            borderColor: '#6987d0',
+          },
+        ]}
+        textStyle={styles.text}
+        flexArr={tableHead.map((header) => header.flex)}
+      />
+
+      {loading && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 20 }}>Fetching Ledgers...</Text>
+        </View>
+      )}
+
+      {!loading && search === '' && (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>Please Search by Id</Text>
         </View>
       )}
 
-      {search !== '' && filteredTableData.length === 0 && (
+      {!loading && search !== '' && filteredTableData.length === 0 && (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>No Ledger Found</Text>
         </View>
       )}
 
-      {search !== '' && filteredTableData.length > 0 && (
+      {!loading && search !== '' && filteredTableData.length > 0 && (
         <ScrollView
-          style={[styles.tableContainer, filteredTableData.length === 0 && { borderWidth: 0 }]}
+          style={[
+            styles.tableContainer,
+            styles.borderStyle,
+            filteredTableData.length === 0 && { borderWidth: 0 },
+          ]}
         >
           <Table style={styles.table}>
             {filteredTableData.map((rowData, index) => (
               <Row
                 key={index}
-                data={rowData}
-                style={[
-                  styles.row,
-                  index % 2 === 0 && styles.evenRow,
-                  index === 0 && styles.firstRow,
-                ]}
+                data={rowData.slice(2)}
+                style={[styles.row, index % 2 === 1 && styles.evenRow]}
                 textStyle={styles.text}
                 flexArr={tableHead.map((header) => header.flex)}
               />
@@ -261,7 +331,7 @@ const Ledger = ({ route }) => {
 
       <View style={styles.bottomContainer}>
         <Text style={styles.bottomText}>Remaining Balance</Text>
-        <Text style={styles.bottomBalanceText}>रु॰ {previousBalance}</Text>
+        <Text style={styles.bottomBalanceText}>रु॰ {remainingBalance}</Text>
       </View>
     </KeyboardAvoidingView>
   )
@@ -306,8 +376,6 @@ const styles = StyleSheet.create({
   tableContainer: {
     marginLeft: 10,
     marginRight: 10,
-    borderWidth: 2,
-    borderColor: '#6987d0',
     flex: 1,
   },
 
@@ -320,7 +388,11 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     marginRight: 10,
     marginTop: 10,
-    borderWidth: 2,
+  },
+  borderStyle: {
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
     borderColor: '#6987d0',
   },
   headText: {
