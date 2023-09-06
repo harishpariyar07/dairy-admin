@@ -45,6 +45,7 @@ const RegisterScreen = () => {
       <ScrollView>
         <Text style={styles.heading}>Register New User</Text>
         <View style={styles.form}>
+
           <TextInput
             placeholderTextColor='black'
             style={styles.input}
@@ -55,11 +56,11 @@ const RegisterScreen = () => {
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
             value={userId}
+            keyboardType='numeric'
             onChangeText={(e) => {
               setUserId(e)
             }}
           />
-
           <TextInput
             placeholderTextColor='black'
             style={styles.input}
@@ -69,9 +70,20 @@ const RegisterScreen = () => {
             activeUnderlineColor='#3c66cf'
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
+            autoCapitalize='none'
             value={username}
             onChangeText={(e) => {
-              setUsername(e)
+              if (/^[0-9]/.test(e)) {
+                alert('Username cannot start with a number');
+              } else if (e.length > 20) {
+                alert('Username should be less than 20 characters');
+              } else if (/\s/.test(e)) {
+                alert('Username should not contain spaces');
+              } else if (/[A-Z]/.test(e)) {
+                alert('Username should not contain capital letters');
+              } else {
+                setUsername(e);
+              }
             }}
           />
 
@@ -131,6 +143,7 @@ const RegisterScreen = () => {
             activeUnderlineColor='#3c66cf'
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
+            autoCapitalize='none'
             value={password}
             onChangeText={(e) => {
               setPassword(e)
@@ -145,6 +158,7 @@ const RegisterScreen = () => {
             type='outlined'
             underlineColor='#3c66cf'
             activeUnderlineColor='#3c66cf'
+            autoCapitalize='none'
             outlineColor='#3c66cf'
             activeOutlineColor='#3c66cf'
             value={confirmPassword}

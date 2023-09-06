@@ -13,6 +13,7 @@ import AddFarmer from './screens/AddFarmer';
 import CollectMilk from './screens/CollectMilk';
 import Dues from './screens/Dues';
 import Ledger from './screens/Ledger';
+import AddPayments from './screens/AddPayments';
 import Payments from './screens/Payments';
 import RateChart from './screens/RateChart';
 import AddFarmerDetails from './screens/AddFarmerDetails';
@@ -30,6 +31,7 @@ import EditPermissionsScreen from './screens/EditPremissionsScreen';
 import CollectionCenter from './screens/CollectionCenter';
 import MilkReport from './screens/MilkReport';
 import CollectionReport from './screens/CollectionReport';
+import ForgotPassword from './screens/ForgotPassword';
 
 const screens = [
   { name: 'HomeScreen', component: HomeScreen },
@@ -58,6 +60,8 @@ const screens = [
   { name: 'PermissionsScreen', component: PermissionsScreen },
   { name: 'EditPermissionsScreen', component: EditPermissionsScreen },
   
+  { name: 'ForgotPassword', component: ForgotPassword},
+  { name: 'AddPayments', component: AddPayments},
 ];
 
 const Stack = createNativeStackNavigator();
@@ -84,6 +88,7 @@ const AuthenticatedStack = () => {
 const NonAuthenticatedStack = () => (
   <Stack.Navigator>
     <Stack.Screen name="LoginScreen" component={LoginScreen} />
+    <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
   </Stack.Navigator>
 );
 
