@@ -94,6 +94,13 @@ const LoginScreen = () => {
       >
         {isLoading ? 'Logging in...' : 'Login'}
       </Button>
+
+      <Button
+        mode='text'
+        onPress={() => navigation.navigate('ForgotPassword')}
+      >
+        Forgot Password?
+      </Button>
     </SafeAreaView>
   )
 }
