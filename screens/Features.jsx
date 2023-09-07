@@ -10,7 +10,6 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { StatusBar } from 'expo-status-bar'
-
 import AddFarmerImg from '../assets/icons/addFarmer.png'
 import CollectMilkImg from '../assets/icons/collectMilk.png'
 import DuesImg from '../assets/icons/dues.png'
@@ -18,14 +17,16 @@ import LedgerImg from '../assets/icons/ledger.png'
 import PaymentsImg from '../assets/icons/payments.png'
 import RateChartImg from '../assets/icons/rateChart.png'
 import Bills from '../assets/icons/bill.png'
+import milkreport from '../assets/icons/milkreport.png'
 
 const screens = [
   { name: 'Add Farmer', component: 'AddFarmer', image: AddFarmerImg },
   { name: 'Collect Milk', component: 'CollectMilk', image: CollectMilkImg },
-  { name: 'Rate Chart', component: 'RateChart', image: RateChartImg },
   { name: 'Payments', component: 'Payments', image: PaymentsImg },
+  { name: 'Rate Chart', component: 'RateChart', image: RateChartImg },
   { name: 'Dues', component: 'Dues', image: DuesImg },
   { name: 'Ledger', component: 'Ledger', image: LedgerImg },
+  { name: 'Milk Report', component: 'MilkReport', image: milkreport },
   { name: 'Generate Bill', component: 'GenerateBill', image: Bills },
 ]
 

@@ -28,6 +28,8 @@ import EditCollection from './screens/EditCollection';
 import EditUser from './screens/EditUser';
 import EditPermissionsScreen from './screens/EditPremissionsScreen';
 import CollectionCenter from './screens/CollectionCenter';
+import MilkReport from './screens/MilkReport';
+import CollectionReport from './screens/CollectionReport';
 
 const screens = [
   { name: 'HomeScreen', component: HomeScreen },
@@ -41,6 +43,8 @@ const screens = [
   { name: 'CollectMilk', component: CollectMilk },
   { name: 'AddCollection', component: AddCollection },
   { name: 'EditCollection', component: EditCollection },
+  { name: 'MilkReport', component: MilkReport },
+  { name: 'CollectionReport', component: CollectionReport },
   { name: 'RateChart', component: RateChart },
   { name: 'AddRateChart', component: AddRateChart },
   { name: 'EditRateChart', component: EditRateChart },
@@ -53,6 +57,7 @@ const screens = [
   { name: 'RegisterScreen', component: RegisterScreen },
   { name: 'PermissionsScreen', component: PermissionsScreen },
   { name: 'EditPermissionsScreen', component: EditPermissionsScreen },
+  
 ];
 
 const Stack = createNativeStackNavigator();
