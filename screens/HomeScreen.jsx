@@ -16,9 +16,11 @@ import { URL } from '@env'
 import users from '../assets/icons/users.png'
 import editBill from '../assets/icons/editBill.png'
 import collectionCenter from '../assets/icons/collectionCenter.png'
+import collectionreport from '../assets/icons/collectionreport.png'
 
 const screens = [
   { name: 'Collection Center', component: 'CollectionCenter', image: collectionCenter },
+  { name: 'Collection Report', component: 'CollectionReport', image: collectionreport },
   { name: 'Users', component: 'Users', image: users },
   { name: 'Edit Bill', component: 'BillDetails', image: editBill },
 ]
