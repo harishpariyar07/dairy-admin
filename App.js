@@ -29,11 +29,8 @@ import EditCollection from './screens/EditCollection';
 import EditUser from './screens/EditUser';
 import EditPermissionsScreen from './screens/EditPremissionsScreen';
 import CollectionCenter from './screens/CollectionCenter';
-<<<<<<< HEAD
-=======
 import MilkReport from './screens/MilkReport';
 import CollectionReport from './screens/CollectionReport';
->>>>>>> kiran-update
 import ForgotPassword from './screens/ForgotPassword';
 
 const screens = [
