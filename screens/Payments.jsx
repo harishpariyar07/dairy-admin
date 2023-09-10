@@ -7,6 +7,8 @@ import HideWithKeyboard from 'react-native-hide-with-keyboard';
 import { SafeAreaView } from 'react-native';
 import { URL } from '@env';
 import axios from 'axios';
+import formatDate from '../utils/convertDate'
+import { useNavigation } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -36,6 +38,7 @@ const Payments = ({ route }) => {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { username } = route.params;
+  const navigator = useNavigation()
 
   const showPicker1 = () => {
     setIsPickerShow1(true);
@@ -63,38 +66,47 @@ const Payments = ({ route }) => {
     }
   };
 
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+  const fetchPayments = async () => {
+    try {
+      if (username) {
+        setIsLoading(true)
+        const farmers = await axios.get(`${URL}admin/${username}/farmer`)
+        const farmersArray = farmers.data.map((farmer) => ({
+          farmerName: farmer.farmerName,
+          farmerId: farmer.farmerId,
+        }))
+
+        const farmersMap = farmersArray.reduce((acc, farmer) => {
+          acc[farmer.farmerId] = farmer.farmerName
+          return acc
+        }, {})
+
+        if (farmers.data)
+        {
+          const payments = await axios.get(
+            `${URL}admin/${username}/payment?startDate=${startDate}&endDate=${endDate}`
+          );
+  
+          payments.data.forEach((payment) => {
+            if(!payment.farmerName){
+              payment.farmerName = farmersMap[payment.farmerId-'0'];
+            }
+            payment.date = formatDate(payment.date);
+          });
+  
+          setFilteredTableData(payments.data);
+          setTableData(payments.data);
+          setIsLoading(false);
+        }
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.log(error);
+    }
   };
 
   useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        if (username) {
-          setIsLoading(true);
-
-          const collections = await axios.get(
-            `${URL}admin/${username}/payment?startDate=${startDate}&endDate=${endDate}`
-          );
-
-          collections.data.forEach((collection) => {
-            if(!collection.farmerName){
-              collection.farmerName = 'NIL';
-            }
-            collection.date = formatDate(collection.date);
-          });
-
-          setFilteredTableData(collections.data);
-          setTableData(collections.data);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        setIsLoading(false);
-        console.log(error);
-      }
-    };
-    fetchCollections();
+    fetchPayments()
   }, [startDate, endDate, username])
 
   const handleSearch = (text) => {
@@ -110,27 +122,22 @@ const Payments = ({ route }) => {
 
 
   // just to avoid error caused by unserialized date object
-  const navigateToAddCollection = () => {
-    const dateStringToPass = date.toISOString()
-    navigator.navigate('AddCollection', {
-      dateString: dateStringToPass,
-      username: username,
-      shift: selectedOption,
-    })
+  const navigateToAddPayments = () => {
+    navigator.navigate('AddPayments', {username})
   }
 
 
   const Item = ({ date, farmerId, farmerName, amountToPay, remarks }) => (
     <View style={styles.item}>
-      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center' }}>
-        {formatDate(date)}
+      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', paddingVertical: 10}}>
+        {date}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{farmerId}</Text>
-      <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 5 }}>
+      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', padding: 10 }}>{farmerId}</Text>
+      <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>
         {farmerName}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'center' }}>{amountToPay}</Text>
-      <Text style={{ width: 0.3 * windowWidth, textAlign: 'center' }}>{remarks}</Text>
+      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', paddingVertical: 10}}>{amountToPay}</Text>
+      <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>{remarks}</Text>
     </View>
   );
 
@@ -198,7 +205,6 @@ const Payments = ({ route }) => {
 
       </View>
 
-      <ScrollView>
         <View style={styles.container2}>
           <Row
             data={tableHead.map((header) => header.label)}
@@ -221,22 +227,20 @@ const Payments = ({ route }) => {
           )}
 
           {isLoading === false && tableData.length > 0 && (
-            filteredTableData.map((item) => {
-              return (
-                <Item
+            <FlatList
+            data={filteredTableData}
+            renderItem={({ item }) => (
+              <Item
                   date={item.date}
                   farmerId={item.farmerId}
                   farmerName={item.farmerName}
                   amountToPay={item.amountToPay}
                   remarks={item.remarks}
                 />
-              )
-
-            }
-            ))}
+            )}
+            keyExtractor={(item) => item._id}
+          />)}
         </View>
-      </ScrollView>
-
 
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>
@@ -246,7 +250,7 @@ const Payments = ({ route }) => {
             mode='contained'
             style={styles.button}
             buttonColor='#77b300'
-            onPress={() => navigateToAddCollection()}
+            onPress={() => navigateToAddPayments()}
           >
             Add Payment
           </Button>
@@ -354,15 +358,16 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    bottom: 10,
     gap: 10,
+    paddingTop: 20,
+    borderTopColor: '#101010',
+    borderTopWidth: 1
   },
   container2: {
     flex: 8,
     width: windowWidth,
     borderBottomWidth: 1,
     borderBottomColor: 'gray',
-    marginBottom: 20,
   },
 
   // This only works on iOS
