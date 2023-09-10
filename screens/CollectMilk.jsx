@@ -44,6 +44,9 @@ const CollectMilk = ({ route }) => {
   const navigator = useNavigation()
   const { username } = route.params
   const [selectedOption, setSelectedOption] = useState(date.getTime() < 12 ? 'Morning' : 'Evening')
+  const [totalMilk, setTotalMilk] = useState(0)
+  const [avgFat, setAvgFat] = useState(0)
+  const [avgSNF, setAvgSNF] = useState(0)
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -53,6 +56,9 @@ const CollectMilk = ({ route }) => {
           const collections = await axios.get(
             `${URL}admin/${username}/collection?date=${date}&shift=${selectedOption}`
           )
+          fetchAvgFat()
+          fetchAvgSNF()
+          fetchTotalMilk()
           setTableDate(collections.data)
           setIsLoading(false)
         }
@@ -64,6 +70,39 @@ const CollectMilk = ({ route }) => {
 
     fetchCollections()
   }, [date, selectedOption])
+
+  const fetchTotalMilk = async () => {
+    try {
+      const res = await axios.get(
+        `${URL}user/${username}/collection/totalmilk?start=${date}&end=${date}`
+      )
+      setTotalMilk((res.data.length && res.data[0].totalMilk.toFixed(2)) || 0)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchAvgFat = async () => {
+    try {
+      const res = await axios.get(
+        `${URL}user/${username}/collection/avgfat?start=${date}&end=${date}`
+      )
+      setAvgFat(res.data || 0)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const fetchAvgSNF = async () => {
+    try {
+      const res = await axios.get(
+        `${URL}user/${username}/collection/avgsnf?start=${date}&end=${date}`
+      )
+      setAvgSNF(res.data || 0)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -191,6 +230,21 @@ const CollectMilk = ({ route }) => {
             />
             <Text style={{ color: '#fff' }}>Evening</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={{flexDirection:'row'}}>
+        <View style={{flexDirection:'column'}}>
+          <Text>Total Milk</Text>
+          <Text>{totalMilk}</Text>
+        </View>
+        <View style={{flexDirection:'column'}}>
+          <Text>Avg Fat</Text>
+          <Text>{avgFat}</Text>
+        </View>
+        <View style={{flexDirection:'column'}}> 
+          <Text>Avg SNF</Text>
+          <Text>{avgSNF}</Text>
         </View>
       </View>
 

@@ -7,16 +7,7 @@ import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
-import NepaliDate from 'nepali-date-converter'
-
-const formatDate = (dateInAd) => {
-  const dateInBS = new NepaliDate(new Date(dateInAd))
-  const year = dateInBS.getYear()
-  const month = dateInBS.getMonth()+1
-  const day = dateInBS.getDate()
-  const formattedDate = `${year}-${month}-${day}`
-  return formattedDate
-}
+import formatDate from '../utils/convertDate'
 
 const Ledger = ({ route }) => {
   // FOR DATE PICKER
