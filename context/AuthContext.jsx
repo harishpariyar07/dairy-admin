@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }) => {
         return { error: true, message: 'Fill all the fields' }
       }
     } catch (error) {
-      return { error: true, message: error.message }
+      return { error: true, message: error.response.data.error }
     }
   }
 

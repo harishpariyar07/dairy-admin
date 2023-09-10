@@ -25,20 +25,20 @@ const LoginScreen = () => {
   }
 
   const login = async () => {
-    try {
       setIsLoading(true)
       const res = await onLogin({ email, password })
 
       if (res && res.error) {
         setIsLoading(false)
         alert(res.message)
-      } else {
+      } else if (res && !res.error){
         setIsLoading(false)
         alert('Admin Logged In Successfully')
       }
-    } catch (err) {
-      console.log(err)
-    }
+      else
+      {
+        alert(res.message)
+      }
   }
 
   return (
