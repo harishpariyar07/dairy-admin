@@ -7,6 +7,7 @@ import {
   Platform,
   TouchableOpacity,
   FlatList,
+  RefreshControl
 } from 'react-native'
 import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
@@ -47,6 +48,9 @@ const CollectMilk = ({ route }) => {
   const [totalMilk, setTotalMilk] = useState(0)
   const [avgFat, setAvgFat] = useState(0)
   const [avgSNF, setAvgSNF] = useState(0)
+
+  // refresh control
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -126,6 +130,11 @@ const CollectMilk = ({ route }) => {
       shift: selectedOption,
     })
   }
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCollections().then(() => setRefreshing(false));
+  };
 
   const Item = ({ farmerName, farmerId, qty, rate, fat, snf, amount, id }) => (
     <View style={styles.item}>
@@ -274,6 +283,9 @@ const CollectMilk = ({ route }) => {
             data={tableData.filter(({ farmerName }) =>
               farmerName.toLowerCase().includes(search.toLowerCase())
             )}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
             renderItem={({ item }) => (
               <Item
                 farmerId={item.farmerId}
