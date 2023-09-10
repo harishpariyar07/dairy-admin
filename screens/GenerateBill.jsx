@@ -16,35 +16,10 @@ import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { Button } from 'react-native-paper'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TextInput } from 'react-native-paper'
-import NepaliDate from 'nepali-date-converter'
 import { URL } from '@env'
+import htmlTemplate from '../utils/billTemplate'
 const windowWidth = Dimensions.get('window').width
 
-const formatDate = (dateInAd) => {
-  const dateInBS = new NepaliDate(dateInAd)
-  const nepaliMonthNames = [
-    'Baishakh',
-    'Jestha',
-    'Ashadh',
-    'Shrawan',
-    'Bhadra',
-    'Ashoj',
-    'Kartik',
-    'Mangsir',
-    'Poush',
-    'Magh',
-    'Falgun',
-    'Chaitra',
-  ]
-
-  const year = dateInBS.getYear()
-  const month = dateInBS.getMonth()
-  const day = dateInBS.getDate()
-  const monthName = nepaliMonthNames[month]
-  const formattedDate = `${monthName} ${day}, ${year}`
-
-  return formattedDate
-}
 
 const GenerateBill = ({ route }) => {
   // details
@@ -76,6 +51,9 @@ const GenerateBill = ({ route }) => {
     `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableData] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [farmerNotFound, setFarmerNotFound] = useState(false);
+
 
   useEffect(() => {
     fetchBillDetails()
@@ -84,7 +62,7 @@ const GenerateBill = ({ route }) => {
   const fetchBillDetails = async () => {
     try {
       const bill = await axios.get(`${URL}admin/bill`)
-      setOrganizationName(bill.data.organizationName)
+      setOrganizationName(bill.data.organizationName.toUpperCase())
       setContactNumber1(bill.data.contactNumber1)
       setContactNumber2(bill.data.contactNumber2)
       setAddress(bill.data.address)
@@ -102,10 +80,11 @@ const GenerateBill = ({ route }) => {
         setFarmerName(farmer.data.farmerName)
       }
     } catch (error) {
-      alert('Farmer not found')
+      setFarmerNotFound(true); 
       console.log(error)
     }
   }
+  
 
   const fetchLedger = async () => {
     try {
@@ -203,91 +182,24 @@ const GenerateBill = ({ route }) => {
     setAvgSnf(avgSnf.toFixed(2))
   }
 
-  const html = `
-    <html>
-      <body>
-        <h1><center>${organizationName}</center></h1>
-        <h3><center>${address}</center></h3>
-        <h3><center>${billTitle}</center></h3>
-        <div style="display: flex; justify-content: space-between;">
-          <div>
-            <p>Pan No: ${panNumber}</p>
-          </div>
-          <div style="display: flex; flex-direction: column;">
-            <p>${contactNumber1}, ${contactNumber2}</p>
-          </div>
-        </div>
-        <hr>
-        <p><center><u>Farmer ID:</u> ${farmerId} <u>Farmer Name:</u> ${farmerName}</center></p>
-        <p><center>From ${formatDate(startDate)} To ${formatDate(endDate)}</center></p>
-        <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
-            <thead>
-            <tr>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Date</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Shift</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Fat</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Snf</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Qty</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Credit</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Debit</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Remarks</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">Total</th>
-            </tr>
-            </thead>
-            <tbody>
-            ${filteredTableData
-              .map(
-                (item) => `
-                <tr>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[1] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[2] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[3] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[4] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[5] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[6] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[7] || '-'
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[8] || ''
-                    }</td>
-                    <td style="border: 1px solid black; padding: 8px; text-align: center;">${
-                      item[6] - item[7] || ''
-                    }</td>
-                </tr>
-              `
-              )
-              .join('')}
-            <tr>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${avgFat}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${avgSnf}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalQty}L</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalCredit}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${totalDebit}</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">-</th>
-                <th style="border: 1px solid black; padding: 8px; text-align: center;">${(
-                  totalCredit - totalDebit
-                ).toFixed(2)}</th>
-            </tr>
-            </tbody>
-    </table>
-      </body>
-    </html>
-  `
+  const html = htmlTemplate(
+    organizationName,
+    address,
+    billTitle,
+    panNumber,
+    contactNumber1,
+    contactNumber2,
+    farmerId,
+    farmerName,
+    startDate,
+    endDate,
+    filteredTableData,
+    avgFat,
+    avgSnf,
+    totalQty,
+    totalCredit,
+    totalDebit
+  )
 
   const generatePdf = async () => {
     try {
@@ -304,15 +216,28 @@ const GenerateBill = ({ route }) => {
 
   const getRecord = async () => {
     try {
-      await fetchBillDetails()
-      await fetchLedger()
-      await fetchFarmerDetails()
-      calculateOverall()
-      alert('Record fetched successfully')
+      setLoading(true)
+      Promise.all([fetchFarmerDetails(), fetchBillDetails(), fetchLedger()]).then(() => {
+        calculateOverall()
+        if (!farmerNotFound) {
+          generatePdf(); 
+        } else {
+          alert('Farmer not found');
+        }
+        setLoading(false)
+      }).catch((err) => {
+        console.log(err)
+        alert('Something went wrong')
+        setLoading(false)
+      });
     } catch (error) {
       console.log(error)
+      alert('Something went wrong')
+      setLoading(false)
     }
   }
+  
+
 
   return (
     <KeyboardAvoidingView style={styles.container}>
@@ -377,12 +302,20 @@ const GenerateBill = ({ route }) => {
         />
       </ScrollView>
 
-      <Button style={styles.button} mode='contained' buttonColor='#6987d0' onPress={getRecord}>
-        Get Record
+      <Button style={styles.button}
+        mode='contained'
+        buttonColor='#6987d0'
+        onPress={getRecord}
+        loading={loading}
+        disabled={loading}
+      >
+        {loading ? 'Generating...' : 'Generate Bill'}
       </Button>
-      <Button style={styles.button} mode='contained' buttonColor='#77b300' onPress={generatePdf}>
+
+      {/* <Button style={styles.button} mode='contained' buttonColor='#77b300' onPress={generatePdf}>
         Generate PDF
-      </Button>
+      </Button> */}
+
       <StatusBar style='auto' />
     </KeyboardAvoidingView>
   )
