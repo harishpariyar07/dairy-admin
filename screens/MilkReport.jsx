@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native'
+import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView, FlatList, TouchableOpacity, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -7,18 +7,10 @@ import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
-import NepaliDate from 'nepali-date-converter'
+import formatDate from '../utils/convertDate'
+const windowWidth = Dimensions.get('window').width
 
-const formatDate = (dateInAd) => {
-  const dateInBS = new NepaliDate(new Date(dateInAd))
-  const year = dateInBS.getYear()
-  const month = dateInBS.getMonth()+1
-  const day = dateInBS.getDate()
-  const formattedDate = `${year}-${month}-${day}`
-  return formattedDate
-}
-
-const MilkReport = () => {
+const MilkReport = ({route}) => {
   // FOR DATE PICKER
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
   const [endDate, setEndDate] = useState(new Date(Date.now()))
@@ -31,11 +23,13 @@ const MilkReport = () => {
     `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableData] = useState([])
-  const [farmersMap, setFarmersMap] = useState({})
+  const [farmerData, setFarmerData] = useState([])
   const [farmerName, setFarmerName] = useState('No Farmer')
-  const [remainingBalance, setRemainingBalance] = useState(0)
-  const [previousBalanceRow, setPreviousBalanceRow] = useState(['Prev Balance', 0, 0, 'Purano Baki'])
+  const [farmerId, setFarmerId] = useState(null)
+  const [shift, setShift] = useState("Both")
   const [loading, setLoading] = useState(false)
+  const [focus, setFocus] = useState(false)
+  const {username} = route.params
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
@@ -44,13 +38,65 @@ const MilkReport = () => {
 
   // FOR TABLE
   const tableHead = [
+    { label: 'Shift', flex: 0.10 },
     { label: 'Date', flex: 0.25 },
-    { label: 'Qty', flex: 0.20 },
+    { label: 'Qty', flex: 0.15 },
     { label: 'Fat', flex: 0.15 },
     { label: 'Snf', flex: 0.15 },
-    { label: 'Amount', flex: 0.25 },
+    { label: 'Amount', flex: 0.2 },
   ]
 
+  const fetchAllFarmers = async () => {
+    try {
+      const res = await axios.get(`${URL}user/${username}/farmer`)
+      setFarmerData(res.data)
+    }
+    catch(err)
+    {
+      console.log(err)
+    }
+  }
+
+  const fetchFarmerCollections = async () => {
+    try {
+      setLoading(true)
+      const res = await axios.get(`${URL}user/${username}/collection/report?startDate=${startDate}&endDate=${endDate}&shift=${shift}`)
+
+      const collectionArray = res.data.map((collection) => {
+        return [
+          collection.farmerId,
+          collection.shift === "Morning" ? "M" : "E",
+          formatDate(collection.collectionDate),
+          collection.qty,
+          collection.fat,
+          collection.snf,
+          collection.amount,
+        ]
+      })
+      
+      setTableData(collectionArray)
+      setLoading(false)
+    }
+    catch(err)
+    {
+      setLoading(false)
+      console.log(err)
+    }
+  }
+  useEffect(() => {
+    fetchFarmerCollections()
+    fetchAllFarmers()
+  }, [])
+
+  useEffect(() => {
+    fetchFarmerCollections()
+  }, [startDate, endDate, shift])
+
+  useEffect(() => {
+    if (farmerId != null) {
+      setFilteredTableData(tableData.filter((row) => row[0] == farmerId))
+    }
+  }, [farmerId, tableData])
 
   const showPicker1 = () => {
     setIsPickerShow1(true)
@@ -79,6 +125,58 @@ const MilkReport = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
+      <Searchbar
+        placeholder='Search by name'
+        onChangeText={(e) => {
+          setSearch(e)
+          if (e === '') 
+          {
+            setFarmerId(null)
+            setFarmerName('No Farmer')
+          }
+        }}
+        onFocus={() => setFocus(true)}
+        value={search}
+        style={styles.searchBar}
+      />
+
+      {focus && (
+        <FlatList
+        data={search !== '' && farmerData.filter(({ farmerName, farmerId}) =>
+          {
+            if (!isNaN(parseFloat(search))) return search == farmerId
+            return farmerName.toLowerCase().startsWith(search.toLowerCase())
+          }
+        )}
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => {
+            setFarmerId(item.farmerId)
+            setFarmerName(item.farmerName)
+            setSearch(item.farmerName)
+            setFocus(false)
+            }}
+            style={styles.item}>
+              <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+                {item.farmerId}
+              </Text>
+              <Text
+                style={{
+                  width: 0.6 * windowWidth,
+                  textAlign: 'left',
+                  padding: 5,
+                  fontWeight: 'bold',
+                }}
+              >
+                {item.farmerName}
+              </Text>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => item._id}
+      />
+      )}
+
+      {!focus && (
+        <>
       <View style={styles.dateContainer}>
         <View style={styles.dateWrapper}>
           <Text style={[styles.dateText, { fontSize: 16 }]}>From</Text>
@@ -125,16 +223,7 @@ const MilkReport = () => {
         </View>
       </View>
 
-      <Searchbar
-        placeholder='Search by id'
-        onChangeText={(e) => {
-          setSearch(e)
-          setFilteredTableData(tableData.filter((row) => row[0] == e))
-        }}
-        value={search}
-        style={styles.searchBar}
-        keyboardType='numeric'
-      />
+      
 
       <View>
         <Text style={{ fontSize: 20, paddingLeft: 10, color: 'black', fontWeight: 'bold' }}>
@@ -147,23 +236,6 @@ const MilkReport = () => {
         flexArr={tableHead.map((header) => header.flex)}
         style={styles.head}
         textStyle={styles.headText}
-      />
-
-      <Row
-        data={previousBalanceRow}
-        style={[
-          styles.row,
-          styles.evenRow,
-          { marginHorizontal: 10 },
-          filteredTableData.length > 0 && {
-            borderLeftWidth: 2,
-            borderRightWidth: 2,
-            borderBottomWidth: 0,
-            borderColor: '#6987d0',
-          },
-        ]}
-        textStyle={styles.text}
-        flexArr={tableHead.map((header) => header.flex)}
       />
 
       {loading && (
@@ -196,7 +268,7 @@ const MilkReport = () => {
             {filteredTableData.map((rowData, index) => (
               <Row
                 key={index}
-                data={rowData.slice(2)}
+                data={rowData.slice(1)}
                 style={[styles.row, index % 2 === 1 && styles.evenRow]}
                 textStyle={styles.text}
                 flexArr={tableHead.map((header) => header.flex)}
@@ -205,11 +277,8 @@ const MilkReport = () => {
           </Table>
         </ScrollView>
       )}
-
-      <View style={styles.bottomContainer}>
-        <Text style={styles.bottomText}>Remaining Balance</Text>
-        <Text style={styles.bottomBalanceText}>रु॰ {remainingBalance}</Text>
-      </View>
+        </>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -217,6 +286,17 @@ const MilkReport = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  item: {
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 10,
+    borderRadius: 10,
+    margin: 5,
   },
   dateContainer: {
     flexDirection: 'row',
@@ -246,8 +326,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
-    marginLeft: 10,
-    marginRight: 10,
+    marginHorizontal: 10,
+    marginTop: 5,
   },
 
   tableContainer: {
@@ -267,10 +347,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   borderStyle: {
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: '#6987d0',
+    // borderLeftWidth: 2,
+    // borderRightWidth: 2,
+    // borderBottomWidth: 2,
+    // borderColor: '#6987d0',
   },
   headText: {
     color: '#fff',
@@ -295,23 +375,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter',
-  },
-
-  bottomContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    paddingLeft: 10,
-  },
-
-  bottomText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-
-  bottomBalanceText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red',
   },
 })
 

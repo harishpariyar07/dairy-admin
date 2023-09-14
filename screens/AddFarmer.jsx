@@ -105,7 +105,7 @@ const AddFarmer = ({ route }) => {
       {isLoading === false && farmerData.length > 0 && (
         <FlatList
           data={farmerData.filter(({ farmerName }) =>
-            farmerName.toLowerCase().includes(search.toLowerCase())
+            farmerName.toLowerCase().startsWith(search.toLowerCase())
           )}
           renderItem={({ item }) => (
             <Item

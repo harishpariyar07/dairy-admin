@@ -15,8 +15,6 @@ const tableHead = [
   { label: 'Level', width: 0.3 * windowWidth },
 ]
 
-const tableHeadWidthArr = tableHead.map((header) => header.width)
-
 const AddCollection = ({ route }) => {
   const [totalAmt, setTotalAmt] = useState(0)
   const [rate, setRate] = useState(0)
@@ -25,12 +23,10 @@ const AddCollection = ({ route }) => {
   const [snf, setSnf] = useState(null)
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
   const { username } = route.params
   const [filteredData, setFilteredData] = useState([])
-  const [selectedOption, setSelectedOption] = useState('ID')
-  const [isLoadingFarmer, setIsLoadingFarmer] = useState(true)
-
+  const [focus, setFocus] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { dateString, shift } = route.params
   const date = new Date(dateString)
 
@@ -38,7 +34,6 @@ const AddCollection = ({ route }) => {
     const fetchAllFarmers = async () => {
       try {
         if (username) {
-          setIsLoadingFarmer(true)
           const farmers = await axios.get(`${URL}admin/${username}/farmer`)
           const farmersArray = farmers.data.map((farmer) => ({
             farmerName: farmer.farmerName,
@@ -46,11 +41,9 @@ const AddCollection = ({ route }) => {
             farmerLevel: farmer.farmerLevel,
           }))
 
-          setIsLoadingFarmer(false)
           setData(farmersArray)
         }
       } catch (error) {
-        setIsLoadingFarmer(false)
         console.log(error)
       }
     }
@@ -84,11 +77,11 @@ const AddCollection = ({ route }) => {
           })
 
           if (collectionResponse) {
+            setIsLoading(false)
             setRate(0)
             setTotalAmt(0)
             setQty(null)
             setSearch('')
-            setIsLoading(false)
             alert('Collection Added Successfully')
           }
         }
@@ -104,12 +97,9 @@ const AddCollection = ({ route }) => {
     <TouchableOpacity
       style={styles.item}
       onPress={() => {
-        setFilteredData(data.filter((item) => item.farmerId === farmerId))
-        if (selectedOption === 'ID') {
-          setSearch(String(farmerId))
-        } else {
-          setSearch(String(farmerName))
-        }
+        setSearch(String(farmerName))
+        setFilteredData(data.filter((item) => item.farmerId == farmerId))
+        setFocus(false)
       }}
     >
       <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
@@ -130,29 +120,9 @@ const AddCollection = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {search === '' && (
-        <View style={styles.iconButtonContainer}>
-          <TouchableOpacity
-            style={[styles.iconButton, selectedOption === 'ID' && styles.selectedOption]}
-            onPress={() => {
-              setSelectedOption('ID')
-            }}
-          >
-            <Text style={{ color: '#000', fontWeight: 'bold' }}>ID</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.iconButton, selectedOption === 'NAME' && styles.selectedOption]}
-            onPress={() => setSelectedOption('NAME')}
-          >
-            <Text style={{ color: '#000', fontWeight: 'bold' }}>NAME</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <Searchbar
         style={styles.search}
-        placeholder='Search'
+        placeholder='Search by name or id'
         onChangeText={(text) => {
           setSearch(text)
           setQty(0)
@@ -160,19 +130,15 @@ const AddCollection = ({ route }) => {
           setSnf(0)
           setTotalAmt(0)
           setRate(0)
-          if (selectedOption === 'ID') {
-            setFilteredData(data.filter((item) => String(item.farmerId) === text))
-          } else {
-            if (text === '') {
-              setFilteredData([])
-            }
+          if (text === '') {
+            setFilteredData([])
           }
         }}
+        onFocus={() => setFocus(true)}
         value={search}
-        keyboardType={selectedOption === 'ID' ? 'numeric' : 'default'}
       />
 
-      {filteredData.length > 0 && search !== '' ? (
+      {!focus && filteredData.length > 0 && search !== '' && (
         filteredData.map((item, index) => (
           <View style={styles.farmerDetails} key={index}>
             <View style={{ flexDirection: 'row', padding: 10 }}>
@@ -249,26 +215,24 @@ const AddCollection = ({ route }) => {
               {isLoading ? 'Adding...' : 'Add Collection'}
             </Button>
           </View>
-        ))
-      ) : (
-        <View>
-          {isLoadingFarmer && (
-            <View style={{ flex: 1, top: 150, alignItems: 'center' }}>
-              <Text style={{ fontSize: 20 }}>Loading Farmers...</Text>
-            </View>
-          )}
+        )))
+      }
 
-          {!isLoadingFarmer && (
+      {focus && filteredData.length === 0 && search !== '' && 
+        (<View>
             <FlatList
-              data={data.filter(({ farmerName }) =>
-                farmerName.toLowerCase().includes(search.toLowerCase())
+              data={data.filter(({ farmerName, farmerId }) =>
+              {
+                if (!isNaN(parseFloat(search))) return search == farmerId
+                return farmerName.toLowerCase().startsWith(search.toLowerCase())
+              }
               )}
               renderItem={({ item }) => (
                 <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
               )}
               keyExtractor={(item) => item._id}
+              key={(item) => item._id}
             />
-          )}
         </View>
       )}
     </SafeAreaView>

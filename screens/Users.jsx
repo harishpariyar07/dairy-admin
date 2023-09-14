@@ -79,8 +79,8 @@ const Users = () => {
 
       {isLoading === false && userData.length > 0 && (
         <FlatList
-          data={userData.filter(({ username }) =>
-            username.toLowerCase().includes(search.toLowerCase())
+          data={userData.filter(({ contactPerson }) =>
+            contactPerson.toLowerCase().startsWith(search.toLowerCase())
           )}
           renderItem={({ item }) => (
             <Item

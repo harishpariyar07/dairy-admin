@@ -47,27 +47,27 @@ const CollectMilk = ({ route }) => {
   const [totalMilk, setTotalMilk] = useState(0)
   const [avgFat, setAvgFat] = useState(0)
   const [avgSNF, setAvgSNF] = useState(0)
+  
+  const fetchCollections = async () => {
+    try {
+      if (username) {
+        setIsLoading(true)
+        const collections = await axios.get(
+          `${URL}admin/${username}/collection?date=${date}&shift=${selectedOption}`
+        )
+        fetchAvgFat()
+        fetchAvgSNF()
+        fetchTotalMilk()
+        setTableDate(collections.data)
+        setIsLoading(false)
+      }
+    } catch (error) {
+      setIsLoading(false)
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        if (username) {
-          setIsLoading(true)
-          const collections = await axios.get(
-            `${URL}admin/${username}/collection?date=${date}&shift=${selectedOption}`
-          )
-          fetchAvgFat()
-          fetchAvgSNF()
-          fetchTotalMilk()
-          setTableDate(collections.data)
-          setIsLoading(false)
-        }
-      } catch (error) {
-        setIsLoading(false)
-        console.log(error)
-      }
-    }
-
     fetchCollections()
   }, [date, selectedOption])
 
@@ -272,7 +272,7 @@ const CollectMilk = ({ route }) => {
         {isLoading === false && tableData.length > 0 && (
           <FlatList
             data={tableData.filter(({ farmerName }) =>
-              farmerName.toLowerCase().includes(search.toLowerCase())
+              farmerName.toLowerCase().startsWith(search.toLowerCase())
             )}
             renderItem={({ item }) => (
               <Item

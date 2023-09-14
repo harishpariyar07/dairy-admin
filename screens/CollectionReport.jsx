@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native'
+import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView, FlatList, TouchableOpacity, Dimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -7,18 +7,10 @@ import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
-import NepaliDate from 'nepali-date-converter'
+import formatDate from '../utils/convertDate'
+const windowWidth = Dimensions.get('window').width
 
-const formatDate = (dateInAd) => {
-  const dateInBS = new NepaliDate(new Date(dateInAd))
-  const year = dateInBS.getYear()
-  const month = dateInBS.getMonth()+1
-  const day = dateInBS.getDate()
-  const formattedDate = `${year}-${month}-${day}`
-  return formattedDate
-}
-
-const CollectionReport = () => {
+const CollectionReport = ({route}) => {
   // FOR DATE PICKER
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
   const [endDate, setEndDate] = useState(new Date(Date.now()))
@@ -31,11 +23,11 @@ const CollectionReport = () => {
     `${endDate.toUTCString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableData] = useState([])
-  const [farmersMap, setFarmersMap] = useState({})
-  const [farmerName, setFarmerName] = useState('No Farmer')
-  const [remainingBalance, setRemainingBalance] = useState(0)
-  const [previousBalanceRow, setPreviousBalanceRow] = useState(['Prev Balance', 0, 0, 'Purano Baki'])
+  const [userData, setUserData] = useState([])
+  const [username, setUsername] = useState('No User')
+  const [shift, setShift] = useState("Both")
   const [loading, setLoading] = useState(false)
+  const [focus, setFocus] = useState(false)
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
@@ -44,13 +36,66 @@ const CollectionReport = () => {
 
   // FOR TABLE
   const tableHead = [
+    { label: 'Shift', flex: 0.10 },
     { label: 'Date', flex: 0.25 },
-    { label: 'Qty', flex: 0.20 },
+    { label: 'Qty', flex: 0.15 },
     { label: 'Fat', flex: 0.15 },
     { label: 'Snf', flex: 0.15 },
-    { label: 'Amount', flex: 0.25 },
+    { label: 'Amount', flex: 0.2 },
   ]
 
+  const fetchAllUsers = async () => {
+    try {
+      const res = await axios.get(`${URL}user`)
+      setUserData(res.data)
+    }
+    catch(err)
+    {
+      console.log(err)
+    }
+  }
+
+  const fetchUserCollections = async () => {
+    try {
+      setLoading(true)
+      const res = await axios.get(`${URL}admin/collection/report?startDate=${startDate}&endDate=${endDate}&shift=${shift}`)
+
+      const collectionArray = res.data.map((collection) => {
+        return [
+          collection.userId,
+          collection.username,
+          collection.shift === "Morning" ? "M" : "E",
+          formatDate(collection.date),
+          collection.totalMilk,
+          collection.avgFat,
+          collection.avgSNF,
+          collection.totalAmount,
+        ]
+      })
+      
+      setTableData(collectionArray)
+      setLoading(false)
+    }
+    catch(err)
+    {
+      setLoading(false)
+      console.log(err)
+    }
+  }
+  useEffect(() => {
+    fetchUserCollections()
+    fetchAllUsers()
+  }, [])
+
+  useEffect(() => {
+    fetchUserCollections()
+  }, [startDate, endDate, shift])
+
+  useEffect(() => {
+    if (username != null) {
+      setFilteredTableData(tableData.filter((row) => row[1] == username))
+    }
+  }, [username, tableData])
 
   const showPicker1 = () => {
     setIsPickerShow1(true)
@@ -79,6 +124,56 @@ const CollectionReport = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
+      <Searchbar
+        placeholder='Search by name'
+        onChangeText={(e) => {
+          setSearch(e)
+          if (e === '') 
+          {
+            setUsername(null)
+          }
+        }}
+        onFocus={() => setFocus(true)}
+        value={search}
+        style={styles.searchBar}
+      />
+
+      {focus && (
+        <FlatList
+        data={search !== '' && userData.filter(({ username, userId}) =>
+          {
+            if (!isNaN(parseFloat(search))) return search == userId
+            return username.toLowerCase().startsWith(search.toLowerCase())
+          }
+        )}
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => {
+            setUsername(item.username)
+            setSearch(item.username)
+            setFocus(false)
+            }}
+            style={styles.item}>
+              <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+                {item.userId}
+              </Text>
+              <Text
+                style={{
+                  width: 0.6 * windowWidth,
+                  textAlign: 'left',
+                  padding: 5,
+                  fontWeight: 'bold',
+                }}
+              >
+                {item.username}
+              </Text>
+          </TouchableOpacity>
+        )}
+        keyExtractor={(item) => item._id}
+      />
+      )}
+
+      {!focus && (
+        <>
       <View style={styles.dateContainer}>
         <View style={styles.dateWrapper}>
           <Text style={[styles.dateText, { fontSize: 16 }]}>From</Text>
@@ -125,20 +220,11 @@ const CollectionReport = () => {
         </View>
       </View>
 
-      <Searchbar
-        placeholder='Search by id'
-        onChangeText={(e) => {
-          setSearch(e)
-          setFilteredTableData(tableData.filter((row) => row[0] == e))
-        }}
-        value={search}
-        style={styles.searchBar}
-        keyboardType='numeric'
-      />
+      
 
       <View>
         <Text style={{ fontSize: 20, paddingLeft: 10, color: 'black', fontWeight: 'bold' }}>
-          {farmerName}
+          {username}
         </Text>
       </View>
 
@@ -147,23 +233,6 @@ const CollectionReport = () => {
         flexArr={tableHead.map((header) => header.flex)}
         style={styles.head}
         textStyle={styles.headText}
-      />
-
-      <Row
-        data={previousBalanceRow}
-        style={[
-          styles.row,
-          styles.evenRow,
-          { marginHorizontal: 10 },
-          filteredTableData.length > 0 && {
-            borderLeftWidth: 2,
-            borderRightWidth: 2,
-            borderBottomWidth: 0,
-            borderColor: '#6987d0',
-          },
-        ]}
-        textStyle={styles.text}
-        flexArr={tableHead.map((header) => header.flex)}
       />
 
       {loading && (
@@ -205,11 +274,8 @@ const CollectionReport = () => {
           </Table>
         </ScrollView>
       )}
-
-      <View style={styles.bottomContainer}>
-        <Text style={styles.bottomText}>Remaining Balance</Text>
-        <Text style={styles.bottomBalanceText}>रु॰ {remainingBalance}</Text>
-      </View>
+        </>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -217,6 +283,17 @@ const CollectionReport = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  item: {
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 10,
+    borderRadius: 10,
+    margin: 5,
   },
   dateContainer: {
     flexDirection: 'row',
@@ -246,8 +323,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
-    marginLeft: 10,
-    marginRight: 10,
+    marginHorizontal: 10,
+    marginTop: 5,
   },
 
   tableContainer: {
@@ -267,10 +344,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   borderStyle: {
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: '#6987d0',
+    // borderLeftWidth: 2,
+    // borderRightWidth: 2,
+    // borderBottomWidth: 2,
+    // borderColor: '#6987d0',
   },
   headText: {
     color: '#fff',
@@ -295,23 +372,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter',
-  },
-
-  bottomContainer: {
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    paddingLeft: 10,
-  },
-
-  bottomText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-
-  bottomBalanceText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'red',
   },
 })
 

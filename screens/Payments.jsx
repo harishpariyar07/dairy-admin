@@ -115,7 +115,7 @@ const Payments = ({ route }) => {
     if(text === '') return setFilteredTableData(tableData)
 
     const filteredData = tableData.filter((item) => {
-      return item.farmerName.toLowerCase().includes(text.toLowerCase());
+      return item.farmerName.toLowerCase().startsWith(text.toLowerCase());
     });
     setFilteredTableData(filteredData);
   }

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Platform, FlatList, Dimensions } from 'react-native'
 import { Searchbar, Button, TextInput } from 'react-native-paper'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useNavigation } from '@react-navigation/native'
@@ -8,6 +8,7 @@ import moment from 'moment/moment'
 import axios from 'axios'
 import { URL } from '@env'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
+const windowWidth = Dimensions.get('window').width
 
 const AddPayments = ({ route }) => {
   const navigator = useNavigation()
@@ -15,10 +16,12 @@ const AddPayments = ({ route }) => {
   const [date, setDate] = useState(new Date(Date.now()))
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
+  const [filteredData, setFilteredData] = useState([])
   const [amountToPay, setAmountToPay] = useState(null)
   const [remarks, setRemarks] = useState('')
   const { username } = route.params
   const [isLoading, setIsLoading] = useState(false)
+  const [focus, setFocus] = useState(false)
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -73,23 +76,49 @@ const AddPayments = ({ route }) => {
     }
   }
 
-  const filteredData = data.filter((item) => String(item.farmerId) === search)
+  const Farmer = ({ farmerName, farmerId }) => (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => {
+        setSearch(String(farmerName))
+        setFilteredData(data.filter((item) => item.farmerId == farmerId))
+        setFocus(false)
+      }}
+    >
+      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+        {farmerId}
+      </Text>
+      <Text
+        style={{
+          width: 0.6 * windowWidth,
+          textAlign: 'left',
+          padding: 5,
+          fontWeight: 'bold',
+        }}
+      >
+        {farmerName}
+      </Text>
+    </TouchableOpacity>
+  )
 
   return (
     <SafeAreaView style={styles.container}>
       <Searchbar
         style={styles.search}
-        placeholder='Search by Farmer ID'
+        placeholder='Search by Farmer ID or Name'
         onChangeText={(text) => {
           setSearch(text)
           setAmountToPay(0)
           setRemarks('')
+          if (text === '') {
+            setFilteredData([])
+          }
         }}
+        onFocus={() => setFocus(true)}
         value={search}
-        keyboardType='numeric'
       />
 
-      {filteredData.length > 0 && search.length === String(filteredData[0].farmerId).length ? (
+      {!focus && filteredData.length > 0 && search !== '' && (
         filteredData.map((item, index) => (
           <View style={styles.farmerDetails} key={index}>
             <View style={{ flexDirection: 'row', padding: 5 }}>
@@ -174,18 +203,24 @@ const AddPayments = ({ route }) => {
               </Button>
             </View>
           </View>
-        ))
-      ) : (
-        <Text
-          style={{
-            padding: 50,
-            fontFamily: 'Inter',
-            width: '85%',
-            textAlign: 'center',
-          }}
-        >
-          No matching farmer found
-        </Text>
+        )))}
+
+      {focus && filteredData.length === 0 && search !== '' && 
+        (<View>
+            <FlatList
+              data={data.filter(({ farmerName, farmerId }) =>
+              {
+                if (!isNaN(parseFloat(search))) return search == farmerId
+                return farmerName.toLowerCase().startsWith(search.toLowerCase())
+              }
+              )}
+              renderItem={({ item }) => (
+                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
+              )}
+              keyExtractor={(item) => item._id}
+              key={(item) => item._id}
+            />
+        </View>
       )}
     </SafeAreaView>
   )
@@ -244,6 +279,17 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     marginTop: 10,
+  },
+  item: {
+    backgroundColor: 'white',
+    borderColor: 'gray',
+    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
+    padding: 10,
+    borderRadius: 10,
+    margin: 5,
   },
 })
 

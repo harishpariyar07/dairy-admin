@@ -98,7 +98,7 @@ const RateChart = ({ route }) => {
       {isLoading === false && rateChartData.length > 0 && (
         <FlatList
           data={rateChartData.filter(({ rateChartName }) =>
-            rateChartName.toLowerCase().includes(search.toLowerCase())
+            rateChartName.toLowerCase().startsWith(search.toLowerCase())
           )}
           renderItem={({ item }) => (
             <Item

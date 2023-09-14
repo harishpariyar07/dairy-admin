@@ -131,7 +131,7 @@ const HomeScreen = () => {
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.bottomContainer}>
           {screens
-            .filter(({ name }) => name.toLowerCase().includes(search.toLowerCase()))
+            .filter(({ name }) => name.toLowerCase().startsWith(search.toLowerCase()))
             .map(({ name, component, image }) => (
               <TouchableOpacity
                 key={component}
