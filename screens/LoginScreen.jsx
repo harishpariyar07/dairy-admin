@@ -25,25 +25,23 @@ const LoginScreen = () => {
   }
 
   const login = async () => {
-      setIsLoading(true)
-      const res = await onLogin({ email, password })
+    setIsLoading(true)
+    const res = await onLogin({ email, password })
 
-      if (res && res.error) {
-        setIsLoading(false)
-        alert(res.message)
-      } else if (res && !res.error){
-        setIsLoading(false)
-        alert('Admin Logged In Successfully')
-      }
-      else
-      {
-        alert(res.message)
-      }
+    if (res && res.error) {
+      setIsLoading(false)
+      alert(res.message)
+    } else if (res && !res.error) {
+      setIsLoading(false)
+      alert('Admin Logged In Successfully')
+    }
+    else {
+      alert(res.message)
+    }
   }
 
   return (
     <SafeAreaView style={styles.conatiner}>
-      <StatusBar style='auto' />
 
       <Image source={Dairy} style={styles.image} />
 
@@ -131,6 +129,8 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '50%',
+    resizeMode: 'contain',
+    marginBottom: 20,
   },
 })
 
