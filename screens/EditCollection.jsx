@@ -21,6 +21,7 @@ const EditCollection = ({ route }) => {
   const [selectedOption, setSelectedOption] = useState(route.params.shift)
   const [isPickerShow, setIsPickerShow] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const navigator = useNavigation()
 
   const showPicker = () => {
@@ -31,6 +32,24 @@ const EditCollection = ({ route }) => {
     setDate(value)
     if (Platform.OS === 'android') {
       setIsPickerShow(false)
+    }
+  }
+
+  const deleteCollection = async () => {
+    try {
+      if (username) {
+        setIsDeleting(true)
+        const collectionResponse = await axios.delete(`${URL}admin/${username}/collection/${id}`)
+        if (collectionResponse.status === 200) {
+          setIsLoading(false)
+          alert('Collection Deleted Successfully')
+          navigator.goBack()
+        }
+      }
+    } catch (err) {
+      setIsDeleting(false)
+      alert('Error deleting collection')
+      console.log(err)
     }
   }
 
@@ -209,6 +228,23 @@ const EditCollection = ({ route }) => {
         >
           {isLoading ? 'Updating...' : 'Update Collection'}
         </Button>
+
+        
+        <Button
+          style={styles.button}
+          icon='delete'
+          mode='contained'
+          buttonColor='#77b300'
+          onPress={() => {
+            if (!isDeleting) {
+              deleteCollection()
+            }
+          }}
+          disabled={isDeleting}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete Collection'}
+        </Button>
+        
       </View>
     </SafeAreaView>
   )

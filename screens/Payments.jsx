@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'; 
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, FlatList } from 'react-native';
-import { Button, Searchbar } from 'react-native-paper'; 
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, FlatList, TouchableOpacity } from 'react-native';
+import { Button, IconButton, Searchbar } from 'react-native-paper';
 import { Row } from 'react-native-table-component';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import HideWithKeyboard from 'react-native-hide-with-keyboard';
@@ -81,19 +81,18 @@ const Payments = ({ route }) => {
           return acc
         }, {})
 
-        if (farmers.data)
-        {
+        if (farmers.data) {
           const payments = await axios.get(
             `${URL}admin/${username}/payment?startDate=${startDate}&endDate=${endDate}`
           );
-  
+
           payments.data.forEach((payment) => {
-            if(!payment.farmerName){
-              payment.farmerName = farmersMap[payment.farmerId-'0'];
+            if (!payment.farmerName) {
+              payment.farmerName = farmersMap[payment.farmerId - '0'];
             }
             payment.date = formatDate(payment.date);
           });
-  
+
           setFilteredTableData(payments.data);
           setTableData(payments.data);
           setIsLoading(false);
@@ -112,7 +111,7 @@ const Payments = ({ route }) => {
   const handleSearch = (text) => {
     setSearch(text);
 
-    if(text === '') return setFilteredTableData(tableData)
+    if (text === '') return setFilteredTableData(tableData)
 
     const filteredData = tableData.filter((item) => {
       return item.farmerName.toLowerCase().startsWith(text.toLowerCase());
@@ -123,22 +122,37 @@ const Payments = ({ route }) => {
 
   // just to avoid error caused by unserialized date object
   const navigateToAddPayments = () => {
-    navigator.navigate('AddPayments', {username})
+    navigator.navigate('AddPayments', { username })
   }
 
 
-  const Item = ({ date, farmerId, farmerName, amountToPay, remarks }) => (
-    <View style={styles.item}>
-      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', paddingVertical: 10}}>
+  const Item = ({_id, date, farmerId, farmerName, amountToPay, remarks }) => (
+
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => {
+        navigator.navigate('EditPayment', {
+          _id,
+          username,
+          date,
+          farmerId,
+          farmerName,
+          amountToPay,
+          remarks
+        })
+      }}
+    >
+      <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', paddingVertical: 10 }}>
         {date}
       </Text>
       <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', padding: 10 }}>{farmerId}</Text>
       <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>
         {farmerName}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', paddingVertical: 10}}>{amountToPay}</Text>
+      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', paddingVertical: 10 }}>{amountToPay}</Text>
       <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>{remarks}</Text>
-    </View>
+    </TouchableOpacity>
+
   );
 
   return (
@@ -196,7 +210,7 @@ const Payments = ({ route }) => {
 
         <Searchbar
           placeholder='Search by name'
-          onChangeText={(text)=>{
+          onChangeText={(text) => {
             handleSearch(text)
           }}
           value={search}
@@ -205,42 +219,42 @@ const Payments = ({ route }) => {
 
       </View>
 
-        <View style={styles.container2}>
-          <Row
-            data={tableHead.map((header) => header.label)}
-            widthArr={tableHeadWidthArr}
-            style={styles.head}
-            textStyle={{ ...styles.headText }}
-            text
-          />
+      <View style={styles.container2}>
+        <Row
+          data={tableHead.map((header) => header.label)}
+          widthArr={tableHeadWidthArr}
+          style={styles.head}
+          textStyle={{ ...styles.headText }}
+          text
+        />
 
-          {isLoading && (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 20 }}>Loading Payments...</Text>
-            </View>
-          )}
+        {isLoading && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>Loading Payments...</Text>
+          </View>
+        )}
 
-          {isLoading === false && tableData.length === 0 && (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ fontSize: 20 }}>No Payments Found</Text>
-            </View>
-          )}
+        {isLoading === false && tableData.length === 0 && (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20 }}>No Payments Found</Text>
+          </View>
+        )}
 
-          {isLoading === false && tableData.length > 0 && (
-            <FlatList
+        {isLoading === false && tableData.length > 0 && (
+          <FlatList
             data={filteredTableData}
             renderItem={({ item }) => (
               <Item
-                  date={item.date}
-                  farmerId={item.farmerId}
-                  farmerName={item.farmerName}
-                  amountToPay={item.amountToPay}
-                  remarks={item.remarks}
-                />
+                date={item.date}
+                farmerId={item.farmerId}
+                farmerName={item.farmerName}
+                amountToPay={item.amountToPay}
+                remarks={item.remarks}
+              />
             )}
             keyExtractor={(item) => item._id}
           />)}
-        </View>
+      </View>
 
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 10 }}>

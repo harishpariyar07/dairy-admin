@@ -32,6 +32,7 @@ import CollectionCenter from './screens/CollectionCenter';
 import MilkReport from './screens/MilkReport';
 import CollectionReport from './screens/CollectionReport';
 import ForgotPassword from './screens/ForgotPassword';
+import EditPayment from './screens/EditPayment';
 
 const screens = [
   { name: 'HomeScreen', component: HomeScreen },
@@ -59,9 +60,9 @@ const screens = [
   { name: 'RegisterScreen', component: RegisterScreen },
   { name: 'PermissionsScreen', component: PermissionsScreen },
   { name: 'EditPermissionsScreen', component: EditPermissionsScreen },
-  
   { name: 'ForgotPassword', component: ForgotPassword},
   { name: 'AddPayments', component: AddPayments},
+  { name: 'EditPayment', component: EditPayment},
 ];
 
 const Stack = createNativeStackNavigator();
