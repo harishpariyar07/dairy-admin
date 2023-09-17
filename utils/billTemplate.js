@@ -61,7 +61,6 @@ const htmlTemplate = (
               <th>Credit</th>
               <th>Debit</th>
               <th>Remarks</th>
-              <th>Total</th>
             </tr>
           </thead>
           <tbody>
@@ -70,14 +69,13 @@ const htmlTemplate = (
                 (item) => `
                   <tr>
                     <td>${item[1] || '-'}</td>
-                    <td>${item[2] || '-'}</td>
+                    <td>${item[2] === "Morning" ? "M" : "E" || '-'}</td>
                     <td>${item[3] || '-'}</td>
                     <td>${item[4] || '-'}</td>
                     <td>${item[5] || '-'}</td>
                     <td>${item[6] || '-'}</td>
                     <td>${item[7] || '-'}</td>
                     <td>${item[8] || ''}</td>
-                    <td>${item[6] - item[7] || ''}</td>
                   </tr>
                 `
               )
@@ -91,7 +89,6 @@ const htmlTemplate = (
               <th>${totalCredit}</th>
               <th>${totalDebit}</th>
               <th>-</th>
-              <th>${(totalCredit - totalDebit).toFixed(2)}</th>
             </tr>
           </tbody>
         </table>

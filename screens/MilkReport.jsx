@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Fla
 import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { Button, Searchbar } from 'react-native-paper'
+import { Button, IconButton, Searchbar } from 'react-native-paper'
 import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
@@ -29,6 +29,8 @@ const MilkReport = ({route}) => {
   const [shift, setShift] = useState("Both")
   const [loading, setLoading] = useState(false)
   const [focus, setFocus] = useState(false)
+  const [totalMilk, setTotalMilk] = useState(0)
+  const [totalAmount, setTotalAmount] = useState(0)
   const {username} = route.params
 
   // FOR SEARCH BOX
@@ -60,7 +62,7 @@ const MilkReport = ({route}) => {
   const fetchFarmerCollections = async () => {
     try {
       setLoading(true)
-      const res = await axios.get(`${URL}user/${username}/collection/report?startDate=${startDate}&endDate=${endDate}&shift=${shift}`)
+      const  res = await axios.get(`${URL}user/${username}/collection/report?startDate=${startDate}&endDate=${endDate}&shift=${shift}`)
 
       const collectionArray = res.data.map((collection) => {
         return [
@@ -97,6 +99,19 @@ const MilkReport = ({route}) => {
       setFilteredTableData(tableData.filter((row) => row[0] == farmerId))
     }
   }, [farmerId, tableData])
+
+  useEffect(() => {
+    if (filteredTableData.length > 0) {
+      let totalMilk = 0
+      let totalAmount = 0
+      filteredTableData.forEach((row) => {
+        totalMilk += row[3]
+        totalAmount += row[6]
+      })
+      setTotalMilk(totalMilk.toFixed(2))
+      setTotalAmount(totalAmount.toFixed(2))
+    }
+  }, [filteredTableData])
 
   const showPicker1 = () => {
     setIsPickerShow1(true)
@@ -223,13 +238,52 @@ const MilkReport = ({route}) => {
         </View>
       </View>
 
-      
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{flex: 1}}>
+          <Text style={{ fontSize: 20, paddingLeft: 10, color: 'black', fontWeight: 'bold' }}>
+            {farmerName}
+          </Text>
+        </View>
 
-      <View>
-        <Text style={{ fontSize: 20, paddingLeft: 10, color: 'black', fontWeight: 'bold' }}>
-          {farmerName}
-        </Text>
+        <View style={styles.iconButtonContainer}>
+            <TouchableOpacity
+              style={[styles.iconButton, shift === 'Morning' && styles.selectedOption]}
+              onPress={() => {
+                setShift('Morning')
+              }}
+            >
+              <IconButton
+                icon='weather-sunny' // Choose an appropriate icon name
+                iconColor={'white'}
+                onPress={() => setShift('Morning')}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.iconButton, shift === 'Evening' && styles.selectedOption]}
+              onPress={() => setShift('Evening')}
+            >
+              <IconButton
+                icon='weather-night' // Choose an appropriate icon name
+                iconColor={'white'}
+                onPress={() => setShift('Evening')}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.iconButton, shift === 'Both' && styles.selectedOption]}
+              onPress={() => setShift('Both')}
+            >
+              <IconButton
+                icon='cloud' // Choose an appropriate icon name
+                iconColor={'white'}
+                onPress={() => setShift('Both')}
+              />
+            </TouchableOpacity>
+          </View>
+
       </View>
+
 
       <Row
         data={tableHead.map((header) => header.label)}
@@ -276,7 +330,19 @@ const MilkReport = ({route}) => {
             ))}
           </Table>
         </ScrollView>
+
       )}
+
+      <View style={{paddingHorizontal: 10}}>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'black', fontWeight: 'bold'}}>Total Milk: </Text>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'red', fontWeight: 'bold'}}>{totalMilk} ltr</Text>
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'black', fontWeight: 'bold'}}>Total Amount: </Text>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'red', fontWeight: 'bold'}}>Rs {totalAmount}</Text>
+        </View>
+      </View>
         </>
       )}
     </KeyboardAvoidingView>
@@ -346,11 +412,20 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 10,
   },
-  borderStyle: {
-    // borderLeftWidth: 2,
-    // borderRightWidth: 2,
-    // borderBottomWidth: 2,
-    // borderColor: '#6987d0',
+  iconButtonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: 10,
+  },
+  iconButton: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'gray',
+  },
+  selectedOption: {
+    backgroundColor: '#77b300',
   },
   headText: {
     color: '#fff',

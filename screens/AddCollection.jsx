@@ -80,6 +80,8 @@ const AddCollection = ({ route }) => {
             setIsLoading(false)
             setRate(0)
             setTotalAmt(0)
+            setFat(null)
+            setSnf(null)
             setQty(null)
             setSearch('')
             alert('Collection Added Successfully')

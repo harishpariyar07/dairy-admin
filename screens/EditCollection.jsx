@@ -234,7 +234,7 @@ const EditCollection = ({ route }) => {
           style={styles.button}
           icon='delete'
           mode='contained'
-          buttonColor='#77b300'
+          buttonColor='#ed2f21'
           onPress={() => {
             if (!isDeleting) {
               deleteCollection()

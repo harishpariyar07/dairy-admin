@@ -230,6 +230,17 @@ const GenerateBill = ({ route }) => {
         alert('Something went wrong')
         setLoading(false)
       });
+      setAddress('')
+      setContactNumber1('')
+      setContactNumber2('')
+      setTableData([])
+      setTotalCredit(0)
+      setTotalDebit(0)
+      setTotalQty(0)
+      setAvgFat(0)
+      setAvgSnf(0)
+      setFarmerName('')
+      setFarmerNotFound(false)
     } catch (error) {
       console.log(error)
       alert('Something went wrong')
