@@ -14,10 +14,10 @@ const windowWidth = Dimensions.get('window').width;
 
 const tableHead = [
   { label: 'Date', width: 0.2 * windowWidth },
-  { label: 'Id', width: 0.1 * windowWidth },
+  { label: 'Id', width: 0.15 * windowWidth },
   { label: 'Name', width: 0.3 * windowWidth },
-  { label: 'Amt', width: 0.1 * windowWidth },
-  { label: 'Remarks', width: 0.3 * windowWidth }
+  { label: 'Amt', width: 0.15 * windowWidth },
+  { label: 'Remarks', width: 0.20 * windowWidth }
 ];
 
 const tableHeadWidthArr = tableHead.map((header) => header.width);
@@ -145,12 +145,12 @@ const Payments = ({ route }) => {
       <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', paddingVertical: 10 }}>
         {date}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', padding: 10 }}>{farmerId}</Text>
+      <Text style={{ width: 0.15 * windowWidth, textAlign: 'right', padding: 10 }}>{farmerId}</Text>
       <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>
         {farmerName}
       </Text>
-      <Text style={{ width: 0.1 * windowWidth, textAlign: 'right', paddingVertical: 10 }}>{amountToPay}</Text>
-      <Text style={{ width: 0.3 * windowWidth, textAlign: 'center', padding: 10 }}>{remarks}</Text>
+      <Text style={{ width: 0.15 * windowWidth, textAlign: 'right', paddingVertical: 10 }}>{amountToPay}</Text>
+      <Text style={{ width: 0.20 * windowWidth, textAlign: 'center', padding: 10 }}>{remarks}</Text>
     </TouchableOpacity>
 
   );
