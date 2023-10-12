@@ -17,8 +17,13 @@ import { Button } from 'react-native-paper'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TextInput } from 'react-native-paper'
 import { URL } from '@env'
-import htmlTemplate from '../utils/billTemplate'
+import { htmlTemplate, htmlTemplateShort } from '../utils/billTemplate'
+import RenderHtml from 'react-native-render-html';
+import { TouchableOpacity } from 'react-native-web'
+
+
 const windowWidth = Dimensions.get('window').width
+
 
 
 const GenerateBill = ({ route }) => {
@@ -31,13 +36,14 @@ const GenerateBill = ({ route }) => {
   const [address, setAddress] = useState('')
   const [billTitle, setBillTitle] = useState('')
   const [panNumber, setPanNumber] = useState('')
+  const [htmlData, setHtmlData] = useState('')
 
   // overall calculations
-  const [totalQty, setTotalQty] = useState(0)
-  const [totalCredit, setTotalCredit] = useState(0)
-  const [totalDebit, setTotalDebit] = useState(0)
-  const [avgFat, setAvgFat] = useState(0)
-  const [avgSnf, setAvgSnf] = useState(0)
+  const [TOTALQty, setTotalQty] = useState(0)
+  const [TOTALCredit, setTotalCredit] = useState(0)
+  const [TOTALDebit, setTotalDebit] = useState(0)
+  const [AVGFat, setAvgFat] = useState(0)
+  const [AVGSnf, setAvgSnf] = useState(0)
 
   const { username } = route.params
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
@@ -58,6 +64,11 @@ const GenerateBill = ({ route }) => {
   useEffect(() => {
     fetchBillDetails()
   }, [])
+
+  useEffect(() => {
+    calculateOverall();
+  }, [tableData]);
+
 
   const fetchBillDetails = async () => {
     try {
@@ -80,11 +91,11 @@ const GenerateBill = ({ route }) => {
         setFarmerName(farmer.data.farmerName)
       }
     } catch (error) {
-      setFarmerNotFound(true); 
+      setFarmerNotFound(true);
       console.log(error)
     }
   }
-  
+
 
   const fetchLedger = async () => {
     try {
@@ -138,21 +149,21 @@ const GenerateBill = ({ route }) => {
   const filteredTableData = tableData.filter((item) => item[0] == farmerId)
 
   const calculateOverall = () => {
-    const qty = filteredTableData.reduce((acc, item) => {
+    const totalQty = filteredTableData.reduce((acc, item) => {
       if (item[8] === 'Collection' && typeof item[5] === 'number') {
         return acc + item[5]
       }
       return acc
     }, 0)
 
-    const credit = filteredTableData.reduce((acc, item) => {
+    const totalCredit = filteredTableData.reduce((acc, item) => {
       if (item[8] === 'Collection' && typeof item[6] === 'number') {
         return acc + item[6]
       }
       return acc
     }, 0)
 
-    const debit = filteredTableData.reduce((acc, item) => {
+    const totalDebit = filteredTableData.reduce((acc, item) => {
       if (item[8] !== 'Collection' && typeof item[7] === 'number') {
         return acc + item[7]
       }
@@ -165,7 +176,7 @@ const GenerateBill = ({ route }) => {
           return acc + item[3] * item[5]
         }
         return acc
-      }, 0) / qty
+      }, 0) / totalQty
 
     const avgSnf =
       filteredTableData.reduce((acc, item) => {
@@ -173,81 +184,80 @@ const GenerateBill = ({ route }) => {
           return acc + item[4] * item[5]
         }
         return acc
-      }, 0) / qty
+      }, 0) / totalQty
 
-    setTotalQty(qty.toFixed(2))
-    setTotalCredit(credit.toFixed(2))
-    setTotalDebit(debit.toFixed(2))
-    setAvgFat(avgFat.toFixed(2))
-    setAvgSnf(avgSnf.toFixed(2))
+    setTotalQty(totalQty)
+    setTotalCredit(totalCredit)
+    setTotalDebit(totalDebit)
+    setAvgFat(avgFat)
+    setAvgSnf(avgSnf)
+
+    setHtmlData(htmlTemplateShort(
+      farmerId,
+      farmerName,
+      startDate,
+      endDate,
+      filteredTableData,
+      avgFat.toFixed(2),
+      avgSnf.toFixed(2),
+      totalQty.toFixed(2),
+      totalCredit.toFixed(2),
+      totalDebit.toFixed(2),
+    ))
+
   }
 
-  const html = htmlTemplate(
-    organizationName,
-    address,
-    billTitle,
-    panNumber,
-    contactNumber1,
-    contactNumber2,
-    farmerId,
-    farmerName,
-    startDate,
-    endDate,
-    filteredTableData,
-    avgFat,
-    avgSnf,
-    totalQty,
-    totalCredit,
-    totalDebit
-  )
-
   const generatePdf = async () => {
-    try {
-      const file = await printToFileAsync({
-        html: html,
-        base64: false,
-      })
 
-      await shareAsync(file.uri)
-    } catch (error) {
-      console.log(error)
-    }
+    calculateOverall();
+
+    const html = htmlTemplate(
+      organizationName,
+      address,
+      billTitle,
+      panNumber,
+      contactNumber1,
+      contactNumber2,
+      farmerId,
+      farmerName,
+      startDate,
+      endDate,
+      filteredTableData,
+      AVGFat.toFixed(2),
+      AVGSnf.toFixed(2),
+      TOTALQty.toFixed(2),
+      TOTALCredit.toFixed(2),
+      TOTALDebit.toFixed(2),
+    )
+
+    const file = await printToFileAsync({
+      html: html,
+      base64: false,
+    })
+
+    await shareAsync(file.uri)
   }
 
   const getRecord = async () => {
     try {
-      setLoading(true)
-      Promise.all([fetchFarmerDetails(), fetchBillDetails(), fetchLedger()]).then(() => {
-        calculateOverall()
-        if (!farmerNotFound) {
-          generatePdf(); 
-        } else {
-          alert('Farmer not found');
-        }
-        setLoading(false)
-      }).catch((err) => {
-        console.log(err)
-        alert('Something went wrong')
-        setLoading(false)
-      });
-      setAddress('')
-      setContactNumber1('')
-      setContactNumber2('')
-      setTableData([])
-      setTotalCredit(0)
-      setTotalDebit(0)
-      setTotalQty(0)
-      setAvgFat(0)
-      setAvgSnf(0)
-      setFarmerName('')
-      setFarmerNotFound(false)
+      setLoading(true);
+      await Promise.all([
+        fetchFarmerDetails(),
+        fetchBillDetails(),
+        fetchLedger()
+      ]);
+      if (farmerNotFound) {
+        alert('Farmer not found');
+      }
     } catch (error) {
-      console.log(error)
-      alert('Something went wrong')
-      setLoading(false)
+      console.log(error);
+      alert('Something went wrong');
+    } finally {
+      setLoading(false);
     }
-  }
-  
+  };
+
+
 
 
   return (
@@ -311,7 +321,52 @@ const GenerateBill = ({ route }) => {
           style={styles.textInput}
           onChangeText={(value) => setFarmerId(value)}
         />
+
+        <ScrollView>
+          {filteredTableData.length > 0 ? (
+            <View>
+              <ScrollView
+                style={{
+                  borderWidth: 1,
+                  borderColor: 'black',
+                  margin: 10,
+                  padding: 10,
+                  marginBottom: 0,
+                  backgroundColor: '#fff',
+                }}
+              >
+                <RenderHtml
+                  width={windowWidth}
+                  source={{ html: htmlData }}
+                />
+              </ScrollView>
+
+              {/* Add a "Print" button here */}
+              <Button
+                mode="text"
+                icon={'printer'}
+                onPress={generatePdf}
+                disabled={loading}
+                style={{ 
+                  alignSelf: 'flex-end',
+                }}
+              >
+                {loading ? 'Generating PDF...' : 'Print PDF'}
+              </Button>
+            </View>
+          ) : (
+            <View>
+              <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: 'bold', marginTop: 20 }}>No Record</Text>
+            </View>
+          )}
+        </ScrollView>
+
+
       </ScrollView>
+
+
+
+
 
       <Button style={styles.button}
         mode='contained'
@@ -320,12 +375,8 @@ const GenerateBill = ({ route }) => {
         loading={loading}
         disabled={loading}
       >
-        {loading ? 'Generating...' : 'Generate Bill'}
+        {loading ? 'Fetching...' : 'Fetch Data'}
       </Button>
-
-      {/* <Button style={styles.button} mode='contained' buttonColor='#77b300' onPress={generatePdf}>
-        Generate PDF
-      </Button> */}
 
       <StatusBar style='auto' />
     </KeyboardAvoidingView>
@@ -377,3 +428,35 @@ const styles = StyleSheet.create({
 })
 
 export default GenerateBill
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
