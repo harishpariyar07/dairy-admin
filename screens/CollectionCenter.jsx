@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import axios from 'axios'
 import { URL } from '@env'
 
-const CollectionCenter = ({ navigation }) => {
+const CollectionCenter =  ({ navigation }) => {
   const [users, setUsers] = useState([])
   const [farmersCount, setFarmersCount] = useState({})
 
@@ -87,6 +87,7 @@ const CollectionCenter = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.heading}>Choose CollectionCenter</Text>
       <View style={styles.box}>
         <FlatList
           data={users}
@@ -105,6 +106,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingTop: 20,
+    backgroundColor: '#A7BEAE',
   },
   box: {
     width: '90%',
@@ -133,13 +135,21 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 18,
     fontFamily: 'Inter',
-    color: '#1f4fc2',
+    color: '#059c11',
     paddingLeft: 10,
   },
   userId: {
     fontSize: 14,
     fontFamily: 'Inter',
-    color: '#777',
+    color: '#000',
+  },
+   heading: {
+    fontSize: 27,
+    alignSelf: 'flex-start',
+    paddingLeft: 45,
+    fontFamily: 'LeagueSB',
+    color: '#059c11',
+    marginBottom: 20, 
   },
 })
 

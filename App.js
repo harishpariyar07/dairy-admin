@@ -33,6 +33,9 @@ import MilkReport from './screens/MilkReport';
 import CollectionReport from './screens/CollectionReport';
 import ForgotPassword from './screens/ForgotPassword';
 import EditPayment from './screens/EditPayment';
+import SplashScreen from './screens/SplashScreen'; // Your SplashScreen component
+import { useEffect, useState } from 'react';
+
 
 const screens = [
   { name: 'HomeScreen', component: HomeScreen },
@@ -112,8 +115,22 @@ export default function App() {
     LeagueSB: require('./assets/fonts/LeagueSpartan-Bold.ttf')
   });
 
-  if (!loaded) {
-    return null;
+  // if (!loaded) {
+  //   return null;
+  // }
+
+    const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    if (loaded) {
+      setTimeout(() => {
+        setShowSplash(false);
+      }, 3000); // 3 seconds
+    }
+  }, [loaded]);
+
+  if (showSplash) {
+    return <SplashScreen />;
   }
 
   return (

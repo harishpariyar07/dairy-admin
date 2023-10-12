@@ -304,7 +304,7 @@ const GenerateBill = ({ route }) => {
 
       <Button style={styles.button}
         mode='contained'
-        buttonColor='#6987d0'
+        buttonColor='#059c11'
         onPress={getRecord}
         loading={loading}
         disabled={loading}

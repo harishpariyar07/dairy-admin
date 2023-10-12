@@ -45,8 +45,7 @@ const LoginScreen = () => {
 
       <Image source={Dairy} style={styles.image} />
 
-      <Text style={styles.heading}>Login as admin</Text>
-
+     <Text style={styles.heading}>Login as manager</Text>
       <TextInput
         placeholderTextColor='black'
         style={styles.input}
@@ -87,7 +86,7 @@ const LoginScreen = () => {
         mode='contained'
         style={styles.button}
         onPress={login}
-        buttonColor='#6987d0'
+        buttonColor='#038a0e'
         disabled={isLoading}
       >
         {isLoading ? 'Logging in...' : 'Login'}
@@ -109,6 +108,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 20,
+    backgroundColor:'#A7BEAE',
   },
   button: {
     width: '76%',
@@ -122,10 +122,11 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 30,
     alignSelf: 'flex-start',
-    paddingLeft: 40,
+    paddingLeft: 30,
     fontFamily: 'LeagueSB',
-    color: '#525151',
-  },
+    color: '#de0914',
+    marginLeft: 45,
+    },
   image: {
     width: '100%',
     height: '50%',

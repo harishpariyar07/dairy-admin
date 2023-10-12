@@ -331,6 +331,7 @@ const Ledger = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    // backgroundColor: '#A7BEAE',
   },
   dateContainer: {
     flexDirection: 'row',
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   head: {
-    backgroundColor: '#6987d0',
+      backgroundColor: '#059c11',
     padding: 10,
     marginLeft: 10,
     marginRight: 10,
@@ -409,6 +410,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter',
+
   },
 
   bottomContainer: {
