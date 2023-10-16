@@ -100,7 +100,7 @@ const EditUser = ({ route }) => {
             activeOutlineColor='#3c66cf'
             value={username}
             onChangeText={(e) => {
-              setUsername(e)
+              alert('Username cannot be changed')
             }}
           />
 
@@ -184,7 +184,7 @@ const EditUser = ({ route }) => {
               activeOutlineColor='#3c66cf'
               value={confirmPassword}
               onChangeText={(e) => {
-                setPassword(e)
+                setConfirmPassword(e)
               }}
             />
             <TouchableOpacity onPress={toggleConfirmPasswordVisibility}>

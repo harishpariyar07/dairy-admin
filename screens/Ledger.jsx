@@ -85,11 +85,16 @@ const Ledger = ({ route }) => {
     if (filteredTableData.length > 0)
     {
       const newPreviousBalanceRow = previousBalanceRow
+      const currentBalance = filteredTableData.slice(0).reduce((acc, item) => acc + item[3], 0);
+      const totalBalance = currentBalance + filteredTableData[0][1]
+
       if (filteredTableData[0][1] >= 0) newPreviousBalanceRow[1] = filteredTableData[0][1]
       else newPreviousBalanceRow[1] = 0
       if (filteredTableData[0][1] < 0) newPreviousBalanceRow[2] = filteredTableData[0][1]
       else newPreviousBalanceRow[2] = 0
+
       setPreviousBalanceRow(newPreviousBalanceRow)
+      setRemainingBalance(totalBalance)
     }
     else
     {
@@ -101,7 +106,7 @@ const Ledger = ({ route }) => {
     if (search !== '') {
       if (farmersMap[search - '0']) {
         setFarmerName(farmersMap[search - '0'])
-        fetchBalances(search - '0')
+        // fetchBalances(search - '0')
       }
       else
       {
@@ -140,23 +145,6 @@ const Ledger = ({ route }) => {
     }
   }
 
-  const fetchBalances = async (farmerId) => {
-    try {
-      if (username) {
-        const res = await axios.get(
-          `${URL}admin/${username}/farmer/${farmerId}`
-        )
-
-        if (res.data)
-        {
-          setRemainingBalance(res.data.credit - res.data.debit)
-        }
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
   const makePreviousBalanceZero = () => {
       setFarmerName('No Farmer')
       setRemainingBalance(0)
@@ -164,6 +152,7 @@ const Ledger = ({ route }) => {
       newPreviousBalanceRow[1] = 0
       newPreviousBalanceRow[2] = 0
       setPreviousBalanceRow(newPreviousBalanceRow)
+      setRemainingBalance(0)
   }
 
   const showPicker1 = () => {

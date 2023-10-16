@@ -250,6 +250,7 @@ const Payments = ({ route }) => {
                 farmerName={item.farmerName}
                 amountToPay={item.amountToPay}
                 remarks={item.remarks}
+                _id={item._id}
               />
             )}
             keyExtractor={(item) => item._id}
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
   head: {
     backgroundColor: '#059c11',
-    padding: 15,
+    paddingVertical: 15,
   },
   headText: {
     color: '#fff',

@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'InterB',
   },
   row: {

@@ -87,7 +87,7 @@ const CollectionCenter =  ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Choose CollectionCenter</Text>
+      <Text style={styles.heading}>Choose Collection Center</Text>
       <View style={styles.box}>
         <FlatList
           data={users}
@@ -145,8 +145,7 @@ const styles = StyleSheet.create({
   },
    heading: {
     fontSize: 27,
-    alignSelf: 'flex-start',
-    paddingLeft: 45,
+    alignitems:'center',
     fontFamily: 'LeagueSB',
     color: '#059c11',
     marginBottom: 20, 

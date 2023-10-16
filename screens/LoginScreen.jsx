@@ -120,9 +120,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9edf7',
   },
   heading: {
-    fontSize: 30,
+    fontSize: 33,
     alignSelf: 'flex-start',
-    paddingLeft: 30,
+    alignitems:'center',
     fontFamily: 'LeagueSB',
     color: '#de0914',
     marginLeft: 45,
