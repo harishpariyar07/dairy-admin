@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   head: {
-    backgroundColor: '#6987d0',
+    backgroundColor: '#059c11',
     padding: 10,
     marginLeft: 10,
     marginRight: 10,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'InterB',
   },
   row: {

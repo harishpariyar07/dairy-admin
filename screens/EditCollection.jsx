@@ -39,7 +39,7 @@ const EditCollection = ({ route }) => {
     try {
       if (username) {
         setIsDeleting(true)
-        const collectionResponse = await axios.delete(`${URL}admin/${username}/collection/${id}`)
+        const collectionResponse = await axios.delete(`${URL}admin/${username}/collection/${id}?shift=${selectedOption}&date=${date}`)
         if (collectionResponse.status === 200) {
           setIsLoading(false)
           alert('Collection Deleted Successfully')

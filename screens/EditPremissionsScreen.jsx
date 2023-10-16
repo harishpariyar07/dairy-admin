@@ -67,7 +67,7 @@ const EditPermissionsScreen = ({ route }) => {
       alert('User updated successfully')
       navigation.navigate('Users')
     } catch (err) {
-      alert('Error in updating user')
+      alert(err.response.data.error)
       console.log(err)
     }
   }

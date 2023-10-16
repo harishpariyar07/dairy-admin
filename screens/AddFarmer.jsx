@@ -125,7 +125,7 @@ const AddFarmer = ({ route }) => {
         mode='contained'
         onPress={() => navigator.navigate('AddFarmerDetails', { username })}
         style={styles.button}
-        buttonColor='#6987d0'
+        buttonColor='#77b300'
       >
         Add farmer
       </Button>
@@ -166,6 +166,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: 2,
+    backgroundColor: '#A7BEAE',
   },
   item: {
     backgroundColor: 'white',

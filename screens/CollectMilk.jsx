@@ -255,7 +255,7 @@ const CollectMilk = ({ route }) => {
           <Text>Avg SNF</Text>
           <Text>{avgSNF}</Text>
         </View>
-      </View>
+      </View> 
 
       <View style={styles.container2}>
         <Row
@@ -323,6 +323,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#A7BEAE',
   },
   upperContainer: {
     justifyContent: 'space-between',
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#77b300',
   },
   head: {
-    backgroundColor: '#6987d0',
+    backgroundColor: '#059c11',
     padding: 15,
   },
   headText: {

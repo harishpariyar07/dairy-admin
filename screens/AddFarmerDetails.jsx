@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: 2,
+    backgroundColor: '#A7BEAE',
   },
   textInput: {
     backgroundColor: 'white',

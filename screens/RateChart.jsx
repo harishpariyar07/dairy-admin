@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: 2,
+    backgroundColor: '#A7BEAE',
   },
   item: {
     backgroundColor: 'white',
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
   button: {
     padding: 4,
-    backgroundColor: '#6987d0',
+    backgroundColor: '#77b300',
   },
   centeredView: {
     justifyContent: 'center',

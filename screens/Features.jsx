@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    backgroundColor:'#A7BEAE'
   },
   button: {
     height: 130,
@@ -73,15 +74,15 @@ const styles = StyleSheet.create({
     width: '46%',
     marginVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#edc6c6',
-    shadowColor: '#babbbf',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.27,
-    shadowRadius: 4.65,
-    elevation: 6,
+    backgroundColor: '#E7E8D1',
+    // shadowColor: '#babbbf',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 3,
+    // },
+    // shadowOpacity: 0.27,
+    // shadowRadius: 4.65,
+    // elevation: 6,
   },
   bottomContainer: {
     margin: 5,
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   btnText: {
     padding: 10,
     fontFamily: 'Inter',
-    color: 'black',
+    color: '#059c11',
   },
 })
 

@@ -99,7 +99,7 @@ const Users = () => {
         mode='contained'
         onPress={() => navigator.navigate('RegisterScreen')}
         style={styles.button}
-        buttonColor='#6987d0'
+        buttonColor='#77b300'
       >
         Add User
       </Button>
