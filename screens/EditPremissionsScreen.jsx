@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useState, useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Button } from 'react-native-paper'
 import DropDown from 'react-native-paper-dropdown'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import { useNavigation } from '@react-navigation/native'
 import axios from 'axios'
 

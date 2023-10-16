@@ -3,7 +3,7 @@ import React, { useState, useLayoutEffect } from 'react'
 import { TextInput, Button } from 'react-native-paper'
 import { ToastAndroid, StyleSheet } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import { useNavigation } from '@react-navigation/native'
 
 const showToastSuccess = () => {

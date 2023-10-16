@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, Searchbar } from 'react-native-paper'
 import { Row, Table } from 'react-native-table-component'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import axios from 'axios'
 import formatDate from '../utils/convertDate'
 

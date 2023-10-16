@@ -3,10 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import { Searchbar, Button, TextInput, IconButton } from 'react-native-paper'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
-import { useAuth } from '../context/AuthContext'
+import URL from '../constants/ServerUrl'
 import { FlatList } from 'react-native'
-import { Row } from 'react-native-table-component'
 const windowWidth = Dimensions.get('window').width
 
 const tableHead = [

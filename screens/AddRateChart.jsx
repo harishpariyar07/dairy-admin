@@ -5,7 +5,7 @@ import DropDown from 'react-native-paper-dropdown'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import { useNavigation } from '@react-navigation/native'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import { StatusBar } from 'expo-status-bar'
 
 const categoryOptions = [

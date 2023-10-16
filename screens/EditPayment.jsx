@@ -3,7 +3,7 @@ import { View, Text, SafeAreaView, StyleSheet } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { URL } from '@env';
+import URL from '../constants/ServerUrl';
 
 const EditPayment = ({ route }) => {
     const { _id, username, date, farmerId, farmerName, amountToPay, remarks } = route.params;

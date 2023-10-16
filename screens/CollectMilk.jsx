@@ -15,7 +15,7 @@ import {  Row } from 'react-native-table-component'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { SafeAreaView } from 'react-native'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import axios from 'axios'
 import { FlashList } from "@shopify/flash-list";
 

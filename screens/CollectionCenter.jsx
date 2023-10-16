@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const CollectionCenter =  ({ navigation }) => {
   const [users, setUsers] = useState([])

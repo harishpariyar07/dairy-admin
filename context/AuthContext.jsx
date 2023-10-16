@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 import * as SecureStore from 'expo-secure-store'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const TOKEN_KEY = 'dairy-token'
 const EXPIRY_DATE = 'dairy-admin-expiry'

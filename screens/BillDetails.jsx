@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useEffect, useState } from 'react'
 import { SafeAreaView, ScrollView, StyleSheet, View } from 'react-native'
 import { Button, Text, TextInput } from 'react-native-paper'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const BillDetails = () => {
   const [organizationName, setOrganizationName] = useState('')

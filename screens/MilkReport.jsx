@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, IconButton, Searchbar } from 'react-native-paper'
 import { Row, Table } from 'react-native-table-component'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import axios from 'axios'
 import formatDate from '../utils/convertDate'
 const windowWidth = Dimensions.get('window').width

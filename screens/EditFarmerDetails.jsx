@@ -4,7 +4,7 @@ import { TextInput, Button, useTheme } from 'react-native-paper'
 import DropDown from 'react-native-paper-dropdown'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const farmerLevelOptions = [
   { value: 1, label: 'Level 1' },

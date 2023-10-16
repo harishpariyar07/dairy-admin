@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Table, Row } from 'react-native-table-component';
 import axios from 'axios';
-import { URL } from '@env';
+import URL from '../constants/ServerUrl';
 
 const Dues = ({ route }) => {
   const [data, setData] = useState([]);

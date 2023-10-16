@@ -16,7 +16,7 @@ import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { Button } from 'react-native-paper'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { TextInput } from 'react-native-paper'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import { htmlTemplate, htmlTemplateShort } from '../utils/billTemplate'
 import RenderHtml from 'react-native-render-html';
 import { TouchableOpacity } from 'react-native-web'

@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native'
 import moment from 'moment/moment'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 const windowWidth = Dimensions.get('window').width
 

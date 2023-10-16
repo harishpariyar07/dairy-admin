@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native'
 import { TextInput, Button, IconButton } from 'react-native-paper'
 import { KeyboardAvoidingView } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const EditUser = ({ route }) => {
   // all the states

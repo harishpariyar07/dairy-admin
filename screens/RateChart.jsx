@@ -5,7 +5,7 @@ import { Button, IconButton, MD3Colors, Modal } from 'react-native-paper'
 import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const windowWidth = Dimensions.get('window').width
 

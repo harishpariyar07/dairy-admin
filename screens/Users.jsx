@@ -5,7 +5,7 @@ import { FlatList } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 
 const Users = () => {
   const [search, setSearch] = useState('')

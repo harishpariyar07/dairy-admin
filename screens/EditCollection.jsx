@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView, StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 import axios from 'axios'
-import { URL } from '@env'
+import URL from '../constants/ServerUrl'
 import { Button, IconButton, TextInput } from 'react-native-paper'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import DateTimePicker from '@react-native-community/datetimepicker'
