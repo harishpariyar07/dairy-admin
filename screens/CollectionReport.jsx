@@ -1,14 +1,13 @@
 import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView, FlatList, TouchableOpacity, Dimensions } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { SafeAreaView } from 'react-native'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, Searchbar } from 'react-native-paper'
 import { Row, Table } from 'react-native-table-component'
-import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
 import formatDate from '../utils/convertDate'
 const windowWidth = Dimensions.get('window').width
+import { FlashList } from "@shopify/flash-list";
 
 const CollectionReport = ({route}) => {
   // FOR DATE PICKER
@@ -34,15 +33,49 @@ const CollectionReport = ({route}) => {
 
   const [filteredTableData, setFilteredTableData] = useState([])
 
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [prevStartDate, setPrevStartDate] = useState(startDate);
+  const [prevEndDate, setPrevEndDate] = useState(endDate);
+  const [prevShift, setPrevShift] = useState(shift);
+
+  // Create a debounce function
+  const debounce = (func, delay) => {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        timeout = null;
+        func.apply(context, args);
+      }, delay);
+    };
+  };
+
+  // Function to handle search changes after debouncing
+  const handleSearchDebounced = useCallback(
+    debounce((searchValue) => {
+      setDebouncedSearch(searchValue);
+      if (searchValue === '') {
+        setUsername("No User");
+      }
+    }, 300), // Adjust the debounce delay as needed
+    []
+  );
+
+  // Trigger API requests when debouncedSearch changes
+  useEffect(() => {
+    handleSearchDebounced(search); // Update the debounced value
+  }, [search, handleSearchDebounced]);
+
   // FOR TABLE
-  const tableHead = [
+  const tableHead = useMemo(() => [
     { label: 'Shift', flex: 0.10 },
     { label: 'Date', flex: 0.25 },
     { label: 'Qty', flex: 0.15 },
     { label: 'Fat', flex: 0.15 },
     { label: 'Snf', flex: 0.15 },
     { label: 'Amount', flex: 0.2 },
-  ]
+  ], [])
 
   const fetchAllUsers = async () => {
     try {
@@ -62,14 +95,14 @@ const CollectionReport = ({route}) => {
 
       const collectionArray = res.data.map((collection) => {
         return [
-          collection.userId,
-          collection.username,
-          collection.shift === "Morning" ? "M" : "E",
+          collection?.userId,
+          collection?.username,
+          collection?.shift === "Morning" ? "M" : "E",
           formatDate(collection.date),
-          collection.totalMilk,
-          collection.avgFat,
-          collection.avgSNF,
-          collection.totalAmount,
+          collection?.totalMilk.toFixed(2),
+          collection?.avgFat.toFixed(2),
+          collection?.avgSNF.toFixed(2),
+          collection?.totalAmount.toFixed(2),
         ]
       })
       
@@ -83,13 +116,29 @@ const CollectionReport = ({route}) => {
     }
   }
   useEffect(() => {
-    fetchUserCollections()
+    // fetchUserCollections()
     fetchAllUsers()
   }, [])
 
   useEffect(() => {
-    fetchUserCollections()
-  }, [startDate, endDate, shift])
+    // Define a flag to check if any of the relevant state values have changed
+    const shouldFetchData =
+      debouncedSearch !== search ||
+      startDate !== prevStartDate ||
+      endDate !== prevEndDate ||
+      shift !== prevShift;
+  
+    if (shouldFetchData) {
+      // Update the previous state values
+      setPrevStartDate(startDate);
+      setPrevEndDate(endDate);
+      setPrevShift(shift);
+  
+      // Make the API request only if necessary
+      fetchUserCollections();
+    }
+  }, [debouncedSearch, startDate, endDate, shift, search, prevStartDate, prevEndDate, prevShift]);
+  
 
   useEffect(() => {
     if (username != null) {
@@ -128,6 +177,7 @@ const CollectionReport = ({route}) => {
         placeholder='Search by name'
         onChangeText={(e) => {
           setSearch(e)
+          handleSearchDebounced(e); // Debounce the search input
           if (e === '') 
           {
             setUsername(null)
@@ -139,37 +189,71 @@ const CollectionReport = ({route}) => {
       />
 
       {focus && (
-        <FlatList
-        data={search !== '' && userData.filter(({ username, userId}) =>
-          {
-            if (!isNaN(parseFloat(search))) return search == userId
-            return username.toLowerCase().startsWith(search.toLowerCase())
-          }
-        )}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => {
-            setUsername(item.username)
-            setSearch(item.username)
-            setFocus(false)
-            }}
-            style={styles.item}>
-              <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
-                {item.userId}
-              </Text>
-              <Text
-                style={{
-                  width: 0.6 * windowWidth,
-                  textAlign: 'left',
-                  padding: 5,
-                  fontWeight: 'bold',
+      //   <FlatList
+      //   data={search !== '' && userData.filter(({ username, userId}) =>
+      //     {
+      //       if (!isNaN(parseFloat(search))) return search == userId
+      //       return username.toLowerCase().startsWith(search.toLowerCase())
+      //     }
+      //   )}
+      //   renderItem={({ item }) => (
+      //     <TouchableOpacity onPress={() => {
+      //       setUsername(item.username)
+      //       setSearch(item.username)
+      //       setFocus(false)
+      //       }}
+      //       style={styles.item}>
+      //         <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+      //           {item.userId}
+      //         </Text>
+      //         <Text
+      //           style={{
+      //             width: 0.6 * windowWidth,
+      //             textAlign: 'left',
+      //             padding: 5,
+      //             fontWeight: 'bold',
+      //           }}
+      //         >
+      //           {item.username}
+      //         </Text>
+      //     </TouchableOpacity>
+      //   )}
+      //   keyExtractor={(item) => item._id}
+      //   initialNumToRender={10}
+      //   windowSize={21}
+      // />
+
+        <FlashList
+            data={search !== '' && userData.filter(({ username, userId}) =>
+              {
+                if (!isNaN(parseFloat(search))) return search == userId
+                return username.toLowerCase().startsWith(search.toLowerCase())
+              }
+            )}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => {
+                setUsername(item.username)
+                setSearch(item.username)
+                setFocus(false)
                 }}
-              >
-                {item.username}
-              </Text>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item._id}
-      />
+                style={styles.item}>
+                  <Text style={{ width: 0.2 * windowWidth, textAlign: 'center', fontWeight: 'bold' }}>
+                    {item.userId}
+                  </Text>
+                  <Text
+                    style={{
+                      width: 0.6 * windowWidth,
+                      textAlign: 'left',
+                      padding: 5,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {item.username}
+                  </Text>
+              </TouchableOpacity>
+            )}
+            estimatedItemSize={69}
+        />
       )}
 
       {!focus && (
@@ -235,9 +319,9 @@ const CollectionReport = ({route}) => {
         textStyle={styles.headText}
       />
 
-      {loading && (
+      {loading &&  (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 20 }}>Fetching Ledgers...</Text>
+          <Text style={{ fontSize: 20 }}>Fetching Collections...</Text>
         </View>
       )}
 
@@ -249,7 +333,7 @@ const CollectionReport = ({route}) => {
 
       {!loading && search !== '' && filteredTableData.length === 0 && (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 20 }}>No Ledger Found</Text>
+          <Text style={{ fontSize: 20 }}>No Collections Found</Text>
         </View>
       )}
 

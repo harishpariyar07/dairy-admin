@@ -32,7 +32,11 @@ const Users = () => {
     fetchData()
   }, [])
 
-  const Item = ({ contactPerson, username, userId }) => (
+  const handleSearch = React.useCallback((e) => {
+    setSearch(e);
+  }, []);
+
+  const Item = React.memo(({ contactPerson, username, userId }) => (
     <View style={styles.item} onPress={() => navigator.navigate('Features', { username })}>
       <Text>{userId}</Text>
       <View>
@@ -49,13 +53,13 @@ const Users = () => {
         <IconButton icon='pencil' iconColor={MD3Colors.error50} size={20} />
       </TouchableOpacity>
     </View>
-  )
+  ));
 
   return (
     <SafeAreaView style={styles.container}>
       <Searchbar
         placeholder='Search by user name'
-        onChangeText={(e) => setSearch(e)}
+        onChangeText={handleSearch}
         value={search}
         style={{
           margin: 10,
@@ -65,19 +69,17 @@ const Users = () => {
         }}
       />
 
-      {isLoading && (
+      {isLoading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>Loading Users...</Text>
         </View>
-      )}
+      )
 
-      {isLoading === false && userData.length === 0 && (
+      : userData.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>No Users Found</Text>
         </View>
-      )}
-
-      {isLoading === false && userData.length > 0 && (
+      ) : (
         <FlatList
           data={userData.filter(({ contactPerson }) =>
             contactPerson.toLowerCase().startsWith(search.toLowerCase())

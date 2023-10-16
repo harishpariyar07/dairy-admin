@@ -1,10 +1,8 @@
 import { View, Text, StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { SafeAreaView } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, Searchbar } from 'react-native-paper'
 import { Row, Table } from 'react-native-table-component'
-import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { URL } from '@env'
 import axios from 'axios'
 import formatDate from '../utils/convertDate'
@@ -34,12 +32,12 @@ const Ledger = ({ route }) => {
   const [filteredTableData, setFilteredTableData] = useState([])
 
   // FOR TABLE
-  const tableHead = [
+  const tableHead = React.useMemo(() => [
     { label: 'Date', flex: 0.25 },
     { label: 'Credit', flex: 0.25 },
     { label: 'Debit', flex: 0.25 },
     { label: 'Remarks', flex: 0.25 },
-  ]
+  ], [])
 
   const { username } = route.params
 
@@ -74,14 +72,6 @@ const Ledger = ({ route }) => {
   }, [])
 
   useEffect(() => {
-    fetchLedger()
-    if (search != '')
-    {
-      setFilteredTableData(tableData.filter((row) => row[0] == search))
-    }
-  }, [startDate, endDate])
-
-  useEffect(() => {
     if (filteredTableData.length > 0)
     {
       const newPreviousBalanceRow = previousBalanceRow
@@ -104,6 +94,8 @@ const Ledger = ({ route }) => {
 
   useEffect(() => {
     if (search !== '') {
+      fetchLedger()
+
       if (farmersMap[search - '0']) {
         setFarmerName(farmersMap[search - '0'])
         // fetchBalances(search - '0')
@@ -118,8 +110,11 @@ const Ledger = ({ route }) => {
       makePreviousBalanceZero()
     }
 
+  }, [search, startDate, endDate])
+
+  useEffect(() => {
     setFilteredTableData(tableData.filter((row) => row[0] == search));
-  }, [search, startDate, endDate, tableData])
+  }, [tableData])
 
   const fetchLedger = async () => {
     try {
@@ -258,12 +253,6 @@ const Ledger = ({ route }) => {
           styles.row,
           styles.evenRow,
           { marginHorizontal: 10 },
-          filteredTableData.length > 0 && {
-            borderLeftWidth: 2,
-            borderRightWidth: 2,
-            borderBottomWidth: 0,
-            borderColor: '#6987d0',
-          },
         ]}
         textStyle={styles.text}
         flexArr={tableHead.map((header) => header.flex)}
@@ -369,12 +358,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     marginRight: 10,
     marginTop: 10,
-  },
-  borderStyle: {
-    borderLeftWidth: 2,
-    borderRightWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: '#6987d0',
   },
   headText: {
     color: '#fff',

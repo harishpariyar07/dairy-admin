@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, FlatList, TouchableOpacity } from 'react-native';
-import { Button, IconButton, Searchbar } from 'react-native-paper';
+import { View, Text, StyleSheet, Dimensions, Platform, FlatList, TouchableOpacity } from 'react-native';
+import { Button, Searchbar } from 'react-native-paper';
 import { Row } from 'react-native-table-component';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import HideWithKeyboard from 'react-native-hide-with-keyboard';
@@ -11,16 +11,6 @@ import formatDate from '../utils/convertDate'
 import { useNavigation } from '@react-navigation/native';
 
 const windowWidth = Dimensions.get('window').width;
-
-const tableHead = [
-  { label: 'Date', width: 0.2 * windowWidth },
-  { label: 'Id', width: 0.15 * windowWidth },
-  { label: 'Name', width: 0.3 * windowWidth },
-  { label: 'Amt', width: 0.15 * windowWidth },
-  { label: 'Remarks', width: 0.20 * windowWidth }
-];
-
-const tableHeadWidthArr = tableHead.map((header) => header.width);
 
 const Payments = ({ route }) => {
   const [startDate, setStartDate] = useState(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
@@ -39,6 +29,16 @@ const Payments = ({ route }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { username } = route.params;
   const navigator = useNavigation()
+
+  const tableHead = React.useMemo(() => [
+    { label: 'Date', width: 0.2 * windowWidth },
+    { label: 'Id', width: 0.15 * windowWidth },
+    { label: 'Name', width: 0.3 * windowWidth },
+    { label: 'Amt', width: 0.15 * windowWidth },
+    { label: 'Remarks', width: 0.20 * windowWidth }
+  ], []);
+  
+  const tableHeadWidthArr = React.useMemo(() => tableHead.map((header) => header.width), [tableHead]);
 
   const showPicker1 = () => {
     setIsPickerShow1(true);
@@ -108,7 +108,7 @@ const Payments = ({ route }) => {
     fetchPayments()
   }, [startDate, endDate, username])
 
-  const handleSearch = (text) => {
+  const handleSearch = React.useCallback((text) => {
     setSearch(text);
 
     if (text === '') return setFilteredTableData(tableData)
@@ -117,7 +117,7 @@ const Payments = ({ route }) => {
       return item.farmerName.toLowerCase().startsWith(text.toLowerCase());
     });
     setFilteredTableData(filteredData);
-  }
+  }, [tableData])
 
 
   // just to avoid error caused by unserialized date object
@@ -228,19 +228,17 @@ const Payments = ({ route }) => {
           text
         />
 
-        {isLoading && (
+        {isLoading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 20 }}>Loading Payments...</Text>
           </View>
-        )}
+        )
 
-        {isLoading === false && tableData.length === 0 && (
+        : tableData.length === 0 ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 20 }}>No Payments Found</Text>
           </View>
-        )}
-
-        {isLoading === false && tableData.length > 0 && (
+        ) : (
           <FlatList
             data={filteredTableData}
             renderItem={({ item }) => (
@@ -254,7 +252,10 @@ const Payments = ({ route }) => {
               />
             )}
             keyExtractor={(item) => item._id}
-          />)}
+            initialNumToRender={10}
+            windowSize={21}
+          />
+          )}
       </View>
 
 

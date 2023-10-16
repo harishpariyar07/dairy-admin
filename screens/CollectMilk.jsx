@@ -2,36 +2,24 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Dimensions,
   Platform,
   TouchableOpacity,
   FlatList,
   RefreshControl
 } from 'react-native'
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigation } from '@react-navigation/native'
 import { Button, IconButton, MD3Colors, Searchbar } from 'react-native-paper'
-import { Table, Row } from 'react-native-table-component'
+import {  Row } from 'react-native-table-component'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { SafeAreaView } from 'react-native'
 import { URL } from '@env'
 import axios from 'axios'
+import { FlashList } from "@shopify/flash-list";
 
 const windowWidth = Dimensions.get('window').width
-
-const tableHead = [
-  { label: '#', width: 0.1 * windowWidth },
-  { label: 'Id', width: 0.1 * windowWidth },
-  { label: 'Name', width: 0.3 * windowWidth },
-  { label: 'Qty', width: 0.1 * windowWidth },
-  { label: 'Fat', width: 0.1 * windowWidth },
-  { label: 'Snf', width: 0.1 * windowWidth },
-  { label: 'Amt', width: 0.2 * windowWidth },
-]
-
-const tableHeadWidthArr = tableHead.map((header) => header.width)
 
 const CollectMilk = ({ route }) => {
   const [isPickerShow, setIsPickerShow] = useState(false)
@@ -48,6 +36,18 @@ const CollectMilk = ({ route }) => {
   const [totalMilk, setTotalMilk] = useState(0)
   const [avgFat, setAvgFat] = useState(0)
   const [avgSNF, setAvgSNF] = useState(0)
+
+  const tableHead = useMemo(() => [
+    { label: '#', width: 0.1 * windowWidth },
+    { label: 'Id', width: 0.1 * windowWidth },
+    { label: 'Name', width: 0.3 * windowWidth },
+    { label: 'Qty', width: 0.1 * windowWidth },
+    { label: 'Fat', width: 0.1 * windowWidth },
+    { label: 'Snf', width: 0.1 * windowWidth },
+    { label: 'Amt', width: 0.2 * windowWidth },
+  ], []);
+  
+  const tableHeadWidthArr = useMemo(() => tableHead.map((header) => header.width), [tableHead]);
   
   const fetchCollections = async () => {
     try {
@@ -56,9 +56,12 @@ const CollectMilk = ({ route }) => {
         const collections = await axios.get(
           `${URL}admin/${username}/collection?date=${date}&shift=${selectedOption}`
         )
-        fetchAvgFat()
-        fetchAvgSNF()
-        fetchTotalMilk()
+        const res = await axios.get(
+          `${URL}admin/${username}/report/?date=${date}&shift=${selectedOption}`
+        )
+        setTotalMilk(res.data?.totalMilk || 0)
+        setAvgFat(res.data?.avgFat || 0)
+        setAvgSNF(res.data?.avgSNF || 0)
         setTableDate(collections.data)
         setIsLoading(false)
       }
@@ -74,39 +77,6 @@ const CollectMilk = ({ route }) => {
   useEffect(() => {
     fetchCollections()
   }, [date, selectedOption])
-
-  const fetchTotalMilk = async () => {
-    try {
-      const res = await axios.get(
-        `${URL}user/${username}/collection/totalmilk?start=${date}&end=${date}`
-      )
-      setTotalMilk((res.data.length && res.data[0].totalMilk.toFixed(2)) || 0)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const fetchAvgFat = async () => {
-    try {
-      const res = await axios.get(
-        `${URL}user/${username}/collection/avgfat?start=${date}&end=${date}`
-      )
-      setAvgFat(res.data || 0)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  const fetchAvgSNF = async () => {
-    try {
-      const res = await axios.get(
-        `${URL}user/${username}/collection/avgsnf?start=${date}&end=${date}`
-      )
-      setAvgSNF(res.data || 0)
-    } catch (error) {
-      console.log(error)
-    }
-  }
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -242,16 +212,16 @@ const CollectMilk = ({ route }) => {
         </View>
       </View>
 
-      <View style={{flexDirection:'row'}}>
-        <View style={{flexDirection:'column'}}>
+      <View style={{flexDirection:'row', width: '100%', justifyContent: 'space-around'}}>
+        <View style={{flexDirection:'column', alignItems: 'center'}}>
           <Text>Total Milk</Text>
           <Text>{totalMilk}</Text>
         </View>
-        <View style={{flexDirection:'column'}}>
+        <View style={{flexDirection:'column', alignItems: 'center'}}>
           <Text>Avg Fat</Text>
           <Text>{avgFat}</Text>
         </View>
-        <View style={{flexDirection:'column'}}> 
+        <View style={{flexDirection:'column', alignItems: 'center'}}> 
           <Text>Avg SNF</Text>
           <Text>{avgSNF}</Text>
         </View>
@@ -266,26 +236,46 @@ const CollectMilk = ({ route }) => {
           text
         />
 
-        {isLoading && (
+        {isLoading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 20 }}>Loading Collections...</Text>
           </View>
-        )}
+        )
 
-        {isLoading === false && tableData.length === 0 && (
+        : tableData.length === 0 ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 20 }}>No Collections Found</Text>
           </View>
-        )}
+        ) : (
+          // <FlatList
+          //   data={tableData.filter(({ farmerName }) =>
+          //     farmerName.toLowerCase().startsWith(search.toLowerCase())
+          //   )}
+          //   refreshControl={
+          //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          //   }
+          //   renderItem={({ item }) => (
+          //     <Item
+          //       farmerId={item.farmerId}
+          //       farmerName={item.farmerName}
+          //       qty={item.qty}
+          //       fat={item.fat}
+          //       snf={item.snf}
+          //       amount={item.amount}
+          //       id={item._id}
+          //       rate={item.rate}
+          //     />
+          //   )}
+          //   keyExtractor={(item) => item._id}
+          //   initialNumToRender={10}
+          //   windowSize={21}
+          //   removeClippedSubviews={true}
+          // />
 
-        {isLoading === false && tableData.length > 0 && (
-          <FlatList
+          <FlashList
             data={tableData.filter(({ farmerName }) =>
               farmerName.toLowerCase().startsWith(search.toLowerCase())
             )}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
             renderItem={({ item }) => (
               <Item
                 farmerId={item.farmerId}
@@ -298,8 +288,8 @@ const CollectMilk = ({ route }) => {
                 rate={item.rate}
               />
             )}
-            keyExtractor={(item) => item._id}
-          />
+            estimatedItemSize={69}
+        />
         )}
       </View>
 
@@ -353,7 +343,7 @@ const styles = StyleSheet.create({
   },
   head: {
     backgroundColor: '#059c11',
-    padding: 15,
+    paddingVertical: 15,
   },
   headText: {
     color: '#fff',

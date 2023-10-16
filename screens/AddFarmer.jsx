@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native'
 import { Button, Searchbar, IconButton, MD3Colors } from 'react-native-paper'
 import { FlatList } from 'react-native'
+import { FlashList } from "@shopify/flash-list";
 import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
@@ -90,34 +91,52 @@ const AddFarmer = ({ route }) => {
         }}
       />
 
-      {isLoading && (
+      {isLoading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>Loading Farmers...</Text>
         </View>
-      )}
+      )
 
-      {isLoading === false && farmerData.length === 0 && (
+      : farmerData.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ fontSize: 20 }}>No Farmers Found</Text>
         </View>
-      )}
+      ) : (
+        // <FlatList
+        //   data={farmerData.filter(({ farmerName }) =>
+        //     farmerName.toLowerCase().startsWith(search.toLowerCase())
+        //   )}
+        //   renderItem={({ item }) => (
+        //     <Item
+        //       farmerId={item.farmerId}
+        //       farmerName={item.farmerName}
+        //       farmerLevel={item.farmerLevel}
+        //       mobileNumber={item.mobileNumber}
+        //       id={item._id}
+        //     />
+        //   )}
+        //   keyExtractor={(item) => item._id.toString()} 
+        //   initialNumToRender={10} 
+        //   windowSize={21}
+        //   removeClippedSubviews={true} 
+        // />
 
-      {isLoading === false && farmerData.length > 0 && (
-        <FlatList
-          data={farmerData.filter(({ farmerName }) =>
-            farmerName.toLowerCase().startsWith(search.toLowerCase())
-          )}
-          renderItem={({ item }) => (
-            <Item
-              farmerId={item.farmerId}
-              farmerName={item.farmerName}
-              farmerLevel={item.farmerLevel}
-              mobileNumber={item.mobileNumber}
-              id={item._id}
-            />
-          )}
-          keyExtractor={(item) => item._id}
+        <FlashList
+            data={farmerData.filter(({ farmerName }) =>
+              farmerName.toLowerCase().startsWith(search.toLowerCase())
+            )}
+            renderItem={({ item }) => (
+              <Item
+                farmerId={item.farmerId}
+                farmerName={item.farmerName}
+                farmerLevel={item.farmerLevel}
+                mobileNumber={item.mobileNumber}
+                id={item._id}
+              />
+            )}
+            estimatedItemSize={69}
         />
+
       )}
 
       <Button
