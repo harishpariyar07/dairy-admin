@@ -21,7 +21,7 @@ const AddCollection = ({ route }) => {
   const [snf, setSnf] = useState(null)
   const [search, setSearch] = useState('')
   const [data, setData] = useState([])
-  const { username } = route.params
+  const { username, isChanged } = route.params
   const [filteredData, setFilteredData] = useState([])
   const [focus, setFocus] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -62,7 +62,7 @@ const AddCollection = ({ route }) => {
         if (rateData.rate) {
           setRate(rateData.rate)
           setTotalAmt(qty * rateData.rate)
-          const collectionResponse = await axios.post(`${URL}admin/${username}/collection`, {
+          const collectionResponse = await axios.post(`${URL}admin/${username}/collection?isChanged=${isChanged}`, {
             shift: shift,
             qty: qty,
             fat: Number(fat),
@@ -228,7 +228,7 @@ const AddCollection = ({ route }) => {
               }
               )}
               renderItem={({ item }) => (
-                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
+                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} key={item._id}/>
               )}
               keyExtractor={(item) => item._id}
               key={(item) => item._id}

@@ -5,8 +5,7 @@ import URL from '../constants/ServerUrl'
 
 const CollectionCenter =  ({ navigation }) => {
   const [users, setUsers] = useState([])
-  const [farmersCount, setFarmersCount] = useState({})
-
+  
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -19,36 +18,6 @@ const CollectionCenter =  ({ navigation }) => {
 
     fetchUsers()
   }, [])
-
-  const getNoOfFarmers = async (username) => {
-    try {
-      if (username) {
-        const res = await axios.get(`${URL}admin/${username}/farmer`)
-        return res.data.length
-      }
-      return 0
-    } catch (error) {
-      console.log(error)
-      return 0
-    }
-  }
-
-  useEffect(() => {
-    const fetchFarmersCount = async () => {
-      try {
-        const counts = {}
-        for (const user of users) {
-          const count = await getNoOfFarmers(user.username)
-          counts[user.username] = count
-        }
-        setFarmersCount(counts)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-    fetchFarmersCount()
-  }, [users])
 
   const handleUserClick = (username) => {
     navigation.navigate('Features', { username })
@@ -77,7 +46,7 @@ const CollectionCenter =  ({ navigation }) => {
           }}
         >
           <Text style={styles.userId}>- UserId: {item.userId}</Text>
-          <Text style={styles.userId}>- Farmers: {farmersCount[item.username] || 0}</Text>
+          <Text style={styles.userId}>- Farmers: {item.farmersCount}</Text>
           <Text style={styles.userId}>- Username: {item.username}</Text>
           <Text style={styles.userId}>- Address: {item.address}</Text>
         </View>
@@ -145,7 +114,7 @@ const styles = StyleSheet.create({
   },
    heading: {
     fontSize: 27,
-    alignitems:'center',
+    alignItems:'center',
     fontFamily: 'LeagueSB',
     color: '#059c11',
     marginBottom: 20, 

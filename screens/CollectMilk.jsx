@@ -18,21 +18,25 @@ import { SafeAreaView } from 'react-native'
 import URL from '../constants/ServerUrl'
 import axios from 'axios'
 import { FlashList } from "@shopify/flash-list";
+import checkDates from '../utils/checkDate'
+import moment from 'moment'
 
 const windowWidth = Dimensions.get('window').width
 
 const CollectMilk = ({ route }) => {
   const [isPickerShow, setIsPickerShow] = useState(false)
-  const [date, setDate] = useState(new Date(Date.now()))
+  const savedDate = new Date(moment().utc())
+  const [date, setDate] = useState(savedDate)
   const [dateString, setDateString] = useState(
-    `${date.toUTCString().split(' ').slice(1, 4).join(' ')}`
+    `${savedDate.toDateString().split(' ').slice(1, 4).join(' ')}`
   )
   const [tableData, setTableDate] = useState([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigator = useNavigation()
   const { username } = route.params
-  const [selectedOption, setSelectedOption] = useState(date.getTime() < 12 ? 'Morning' : 'Evening')
+  const savedShift = savedDate.getUTCHours() < 12 ? 'Morning' : 'Evening'
+  const [selectedOption, setSelectedOption] = useState(savedShift)
   const [totalMilk, setTotalMilk] = useState(0)
   const [avgFat, setAvgFat] = useState(0)
   const [avgSNF, setAvgSNF] = useState(0)
@@ -59,6 +63,7 @@ const CollectMilk = ({ route }) => {
         const res = await axios.get(
           `${URL}admin/${username}/report/?date=${date}&shift=${selectedOption}`
         )
+        console.log(res.data)
         setTotalMilk(res.data?.totalMilk || 0)
         setAvgFat(res.data?.avgFat || 0)
         setAvgSNF(res.data?.avgSNF || 0)
@@ -84,7 +89,7 @@ const CollectMilk = ({ route }) => {
 
   const onChange = (event, value) => {
     setDate(value)
-    const dateInStr = date.toUTCString().split(' ').slice(1, 4).join(' ')
+    const dateInStr = date.toDateString().split(' ').slice(1, 4).join(' ')
     setDateString(dateInStr)
     if (Platform.OS === 'android') {
       setTimeout(() => setIsPickerShow(false), 200)
@@ -94,10 +99,12 @@ const CollectMilk = ({ route }) => {
   // just to avoid error caused by unserialized date object
   const navigateToAddCollection = () => {
     const dateStringToPass = date.toISOString()
+    const check = checkDates(date, savedDate)
     navigator.navigate('AddCollection', {
       dateString: dateStringToPass,
       username: username,
       shift: selectedOption,
+      isChanged: check || selectedOption !== savedShift
     })
   }
 
@@ -289,6 +296,7 @@ const CollectMilk = ({ route }) => {
               />
             )}
             estimatedItemSize={69}
+            key={(item) => item._id}
         />
         )}
       </View>

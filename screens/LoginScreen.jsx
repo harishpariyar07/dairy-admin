@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 33,
     alignSelf: 'flex-start',
-    alignitems:'center',
+    alignItems:'center',
     fontFamily: 'LeagueSB',
     color: '#de0914',
     marginLeft: 45,

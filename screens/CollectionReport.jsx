@@ -27,6 +27,8 @@ const CollectionReport = ({route}) => {
   const [shift, setShift] = useState("Both")
   const [loading, setLoading] = useState(false)
   const [focus, setFocus] = useState(false)
+  const [totalMilk, setTotalMilk] = useState(0)
+  const [totalAmount, setTotalAmount] = useState(0)
 
   // FOR SEARCH BOX
   const [search, setSearch] = useState('')
@@ -138,6 +140,20 @@ const CollectionReport = ({route}) => {
       fetchUserCollections();
     }
   }, [debouncedSearch, startDate, endDate, shift, search, prevStartDate, prevEndDate, prevShift]);
+
+  useEffect(() => {
+    if (filteredTableData.length > 0) {
+      let totalMilk = 0
+      let totalAmount = 0
+      // console.log(filteredTableData[0])
+      filteredTableData.forEach((row) => {
+        totalMilk += Number(row[4])
+        totalAmount += Number(row[7])
+      })
+      setTotalMilk(totalMilk.toFixed(2))
+      setTotalAmount(totalAmount.toFixed(2))
+    }
+  }, [filteredTableData])
   
 
   useEffect(() => {
@@ -181,6 +197,8 @@ const CollectionReport = ({route}) => {
           if (e === '') 
           {
             setUsername(null)
+            setTotalAmount(0)
+            setTotalMilk(0)
           }
         }}
         onFocus={() => setFocus(true)}
@@ -358,6 +376,17 @@ const CollectionReport = ({route}) => {
           </Table>
         </ScrollView>
       )}
+
+      <View style={{paddingHorizontal: 10}}>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'black', fontWeight: 'bold'}}>Total Milk: </Text>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'red', fontWeight: 'bold'}}>{totalMilk} ltr</Text>
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'black', fontWeight: 'bold'}}>Total Amount: </Text>
+          <Text style={{paddingVertical: 5, fontSize: 18, color: 'red', fontWeight: 'bold'}}>Rs {totalAmount}</Text>
+        </View>
+      </View>
         </>
       )}
     </KeyboardAvoidingView>

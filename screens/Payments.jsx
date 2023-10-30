@@ -254,6 +254,7 @@ const Payments = ({ route }) => {
             keyExtractor={(item) => item._id}
             initialNumToRender={10}
             windowSize={21}
+            key={(item) => item._id}
           />
           )}
       </View>

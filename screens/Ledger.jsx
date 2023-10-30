@@ -75,8 +75,9 @@ const Ledger = ({ route }) => {
     if (filteredTableData.length > 0)
     {
       const newPreviousBalanceRow = previousBalanceRow
-      const currentBalance = filteredTableData.slice(0).reduce((acc, item) => acc + item[3], 0);
-      const totalBalance = currentBalance + filteredTableData[0][1]
+      const totalCredit = filteredTableData.slice(0).reduce((acc, item) => acc + item[3], 0);
+      const totalDebit = filteredTableData.slice(0).reduce((acc, item) => acc + item[4], 0);
+      const totalBalance = totalCredit - totalDebit + filteredTableData[0][1]
 
       if (filteredTableData[0][1] >= 0) newPreviousBalanceRow[1] = filteredTableData[0][1]
       else newPreviousBalanceRow[1] = 0

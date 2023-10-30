@@ -38,15 +38,49 @@ const MilkReport = ({route}) => {
 
   const [filteredTableData, setFilteredTableData] = useState([])
 
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [prevStartDate, setPrevStartDate] = useState(startDate);
+  const [prevEndDate, setPrevEndDate] = useState(endDate);
+  const [prevShift, setPrevShift] = useState(shift);
+
+  // Create a debounce function
+  const debounce = (func, delay) => {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      if (timeout) clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        timeout = null;
+        func.apply(context, args);
+      }, delay);
+    };
+  };
+
+  // Function to handle search changes after debouncing
+  const handleSearchDebounced = React.useCallback(
+    debounce((searchValue) => {
+      setDebouncedSearch(searchValue);
+      if (searchValue === '') {
+        setFarmerName("No Farmer");
+      }
+    }, 300), // Adjust the debounce delay as needed
+    []
+  );
+
+  // Trigger API requests when debouncedSearch changes
+  useEffect(() => {
+    handleSearchDebounced(search); // Update the debounced value
+  }, [search, handleSearchDebounced]);
+
   // FOR TABLE
-  const tableHead = [
+  const tableHead = React.useMemo(() => [
     { label: 'Shift', flex: 0.10 },
     { label: 'Date', flex: 0.25 },
     { label: 'Qty', flex: 0.15 },
     { label: 'Fat', flex: 0.15 },
     { label: 'Snf', flex: 0.15 },
     { label: 'Amount', flex: 0.2 },
-  ]
+  ])
 
   const fetchAllFarmers = async () => {
     try {
@@ -86,13 +120,28 @@ const MilkReport = ({route}) => {
     }
   }
   useEffect(() => {
-    fetchFarmerCollections()
+    // fetchFarmerCollections()
     fetchAllFarmers()
   }, [])
 
   useEffect(() => {
-    fetchFarmerCollections()
-  }, [startDate, endDate, shift])
+    // Define a flag to check if any of the relevant state values have changed
+    const shouldFetchData =
+      debouncedSearch !== search ||
+      startDate !== prevStartDate ||
+      endDate !== prevEndDate ||
+      shift !== prevShift;
+  
+    if (shouldFetchData) {
+      // Update the previous state values
+      setPrevStartDate(startDate);
+      setPrevEndDate(endDate);
+      setPrevShift(shift);
+  
+      // Make the API request only if necessary
+      fetchFarmerCollections();
+    }
+  }, [debouncedSearch, startDate, endDate, shift, search, prevStartDate, prevEndDate, prevShift])
 
   useEffect(() => {
     if (farmerId != null) {
@@ -144,10 +193,13 @@ const MilkReport = ({route}) => {
         placeholder='Search by name'
         onChangeText={(e) => {
           setSearch(e)
+          handleSearchDebounced(e); // Debounce the search input
           if (e === '') 
           {
             setFarmerId(null)
             setFarmerName('No Farmer')
+            setTotalAmount(0)
+            setTotalMilk(0)
           }
         }}
         onFocus={() => setFocus(true)}

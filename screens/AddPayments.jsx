@@ -215,7 +215,7 @@ const AddPayments = ({ route }) => {
               }
               )}
               renderItem={({ item }) => (
-                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
+                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} key={item._id} />
               )}
               keyExtractor={(item) => item._id}
               key={(item) => item._id}
