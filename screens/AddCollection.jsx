@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native'
 import { Searchbar, Button, TextInput, IconButton } from 'react-native-paper'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
 import URL from '../constants/ServerUrl'
-import { FlatList } from 'react-native'
-const windowWidth = Dimensions.get('window').width
+import checkConnection from '../utils/internetConnectivity'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import calculateRate from '../utils/calculateRate'
 
-const tableHead = [
-  { label: 'Id', width: 0.2 * windowWidth },
-  { label: 'Name', width: 0.4 * windowWidth },
-  { label: 'Level', width: 0.3 * windowWidth },
-]
+const windowWidth = Dimensions.get('window').width
 
 const AddCollection = ({ route }) => {
   const [totalAmt, setTotalAmt] = useState(0)
@@ -28,18 +25,39 @@ const AddCollection = ({ route }) => {
   const { dateString, shift } = route.params
   const date = new Date(dateString)
 
+
   useEffect(() => {
     const fetchAllFarmers = async () => {
       try {
         if (username) {
-          const farmers = await axios.get(`${URL}admin/${username}/farmer`)
-          const farmersArray = farmers.data.map((farmer) => ({
-            farmerName: farmer.farmerName,
-            farmerId: farmer.farmerId,
-            farmerLevel: farmer.farmerLevel,
-          }))
 
-          setData(farmersArray)
+          if (await checkConnection()) {
+            const farmers = await axios.get(`${URL}admin/${username}/farmer`)
+            const farmersArray = farmers.data.map((farmer) => ({
+              farmerName: farmer.farmerName,
+              farmerId: farmer.farmerId,
+              farmerLevel: farmer.farmerLevel,
+              farmerFixedRate: farmer.fixedRate !== null ? farmer.fixedRate : 0
+            }))
+            setData(farmersArray)
+
+            await AsyncStorage.setItem(`farmers-${username}`, JSON.stringify(farmers))
+          }
+          else {
+            const farmerCache = await AsyncStorage.getItem(`farmers-${username}`)
+
+            if (farmerCache) {
+              const farmers = JSON.parse(farmerCache)
+              const farmersArray = farmers.data.map((farmer) => ({
+                farmerName: farmer.farmerName,
+                farmerId: farmer.farmerId,
+                farmerLevel: farmer.farmerLevel,
+                farmerFixedRate: farmer.fixedRate !== null ? farmer.fixedRate : 0
+              }))
+              setData(farmersArray)
+            }
+          }
+
         }
       } catch (error) {
         console.log(error)
@@ -49,20 +67,64 @@ const AddCollection = ({ route }) => {
     fetchAllFarmers()
   }, [])
 
-  const addCollection = async (farmerId, farmerName, fixedRate) => {
+  const addCollection = async (farmerLevel, farmerId, farmerName, fixedRate, fat, snf) => {
     try {
-      if (username && qty !== null) {
-        setIsLoading(true)
-        const rateResponse = await axios.get(
-          `${URL}admin/${username}/ratelist/${farmerId}/rate?fat=${fat}&snf=${snf}`
-        )
 
-        const rateData = rateResponse.data
+      if (!await checkConnection()) {
+        if (username && qty !== null) {
+          setIsLoading(true)
+          const rateResponse = await axios.get(
+            `${URL}admin/${username}/ratelist/${farmerId}/rate?fat=${fat}&snf=${snf}`
+          )
 
-        if (rateData.rate) {
-          setRate(rateData.rate)
-          setTotalAmt(qty * rateData.rate)
-          const collectionResponse = await axios.post(`${URL}admin/${username}/collection`, {
+          const rateData = rateResponse.data
+
+          if (rateData.rate) {
+            setRate(rateData.rate)
+            setTotalAmt(qty * rateData.rate)
+            const collectionResponse = await axios.post(`${URL}admin/${username}/collection`, {
+              shift: shift,
+              qty: qty,
+              fat: Number(fat),
+              snf: Number(snf),
+              farmerId: farmerId,
+              farmerName: farmerName,
+              collectionDate: date,
+              amount: Number(qty * rateData.rate).toFixed(2),
+              rate: Number(rateData.rate),
+            })
+
+            if (collectionResponse) {
+              setIsLoading(false)
+              setRate(0)
+              setTotalAmt(0)
+              setFat(null)
+              setSnf(null)
+              setQty(null)
+              setSearch('')
+              alert('Collection Added Successfully')
+            }
+          }
+        }
+      }
+
+      else{
+        const rateChart = await AsyncStorage.getItem(`rateChart-${username}`)
+
+        const rateChartData = JSON.parse(rateChart)
+
+        if (rateChartData) {
+          const rate = calculateRate(
+            farmerLevel,
+            fixedRate,
+            rateChartData,
+            fat,
+            snf
+          )
+          setRate(rate)
+          setTotalAmt(qty * rate)
+
+          const dataToPost = {
             shift: shift,
             qty: qty,
             fat: Number(fat),
@@ -70,28 +132,34 @@ const AddCollection = ({ route }) => {
             farmerId: farmerId,
             farmerName: farmerName,
             collectionDate: date,
-            amount: Number(qty * rateData.rate).toFixed(2),
-            rate: Number(rateData.rate),
-          })
-
-          if (collectionResponse) {
-            setIsLoading(false)
-            setRate(0)
-            setTotalAmt(0)
-            setFat(null)
-            setSnf(null)
-            setQty(null)
-            setSearch('')
-            alert('Collection Added Successfully')
+            amount: Number(qty * rate).toFixed(2),
+            rate: Number(rate),
           }
+
+          let dataCache = await AsyncStorage.getItem(`collection-${username}`)
+
+          dataCache = JSON.parse(dataCache)
+
+          if (dataCache) {
+            dataCache.push(dataToPost)
+            await AsyncStorage.setItem(`collection-${username}`, JSON.stringify(dataCache))
+          }
+          else{
+            await AsyncStorage.setItem(`collection-${username}`, JSON.stringify([dataToPost]))
+          }
+          const check = await AsyncStorage.getItem(`collection-${username}`)
+          console.log(check)
         }
+        
       }
+
     } catch (error) {
       setIsLoading(false)
       alert('Error adding collection')
       console.log(error.message)
     }
   }
+
 
   const Farmer = ({ farmerName, farmerId }) => (
     <TouchableOpacity
@@ -207,7 +275,14 @@ const AddCollection = ({ route }) => {
               buttonColor='#77b300'
               onPress={() => {
                 if (!isLoading) {
-                  addCollection(item.farmerId, item.farmerName, item.fixedRate)
+                  addCollection(
+                    item.farmerLevel,
+                    item.farmerId,
+                    item.farmerName,
+                    item.farmerFixedRate,
+                    fat,
+                    snf
+                  )
                 }
               }}
               disabled={isLoading}
@@ -218,23 +293,22 @@ const AddCollection = ({ route }) => {
         )))
       }
 
-      {focus && filteredData.length === 0 && search !== '' && 
+      {focus && filteredData.length === 0 && search !== '' &&
         (<View>
-            <FlatList
-              data={data.filter(({ farmerName, farmerId }) =>
-              {
-                if (!isNaN(parseFloat(search))) return search == farmerId
-                return farmerName.toLowerCase().startsWith(search.toLowerCase())
-              }
-              )}
-              renderItem={({ item }) => (
-                <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
-              )}
-              keyExtractor={(item) => item._id}
-              key={(item) => item._id}
-            />
+          <FlatList
+            data={data.filter(({ farmerName, farmerId }) => {
+              if (!isNaN(parseFloat(search))) return search == farmerId
+              return farmerName.toLowerCase().startsWith(search.toLowerCase())
+            }
+            )}
+            renderItem={({ item }) => (
+              <Farmer farmerId={item.farmerId} farmerName={item.farmerName} id={item._id} />
+            )}
+            keyExtractor={(item) => item._id}
+            key={(item) => item._id}
+          />
         </View>
-      )}
+        )}
     </SafeAreaView>
   )
 }

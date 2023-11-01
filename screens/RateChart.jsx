@@ -5,6 +5,8 @@ import { Button, IconButton, MD3Colors, Modal } from 'react-native-paper'
 import { FlatList } from 'react-native'
 import { SafeAreaView } from 'react-native'
 import axios from 'axios'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import checkConnection from '../utils/internetConnectivity'
 import URL from '../constants/ServerUrl'
 
 const windowWidth = Dimensions.get('window').width
@@ -21,10 +23,21 @@ const RateChart = ({ route }) => {
   const fetchData = async () => {
     try {
       if (username) {
-        setIsLoading(true)
-        const response = await axios.get(`${URL}admin/${username}/ratelist`)
-        setIsLoading(false)
-        setRateChartData(response.data)
+        if (await checkConnection()) {
+          setIsLoading(true)
+          const response = await axios.get(`${URL}admin/${username}/ratelist`)
+          setIsLoading(false)
+          setRateChartData(response.data)
+          console.log(response.data)
+          await AsyncStorage.setItem(`rateChart-${username}`, JSON.stringify(response.data))
+        }
+        else{
+          const rateChartCache = await AsyncStorage.getItem(`rateChart-${username}`)
+          if(rateChartCache){
+            const response = JSON.parse(rateChartCache)
+            setRateChartData(response)
+          }
+        }
       }
     } catch (error) {
       setIsLoading(false)

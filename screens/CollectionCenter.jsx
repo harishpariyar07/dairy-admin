@@ -1,57 +1,81 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
-import axios from 'axios'
-import URL from '../constants/ServerUrl'
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import axios from 'axios';
+import URL from '../constants/ServerUrl';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import checkConnection from '../utils/internetConnectivity';
 
-const CollectionCenter =  ({ navigation }) => {
-  const [users, setUsers] = useState([])
-  const [farmersCount, setFarmersCount] = useState({})
+const CollectionCenter = ({ navigation }) => {
+  const [users, setUsers] = useState([]);
+  const [farmersCount, setFarmersCount] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`${URL}user`)
-        setUsers(response.data)
+        if (await checkConnection()) {
+          const response = await axios.get(`${URL}user`);
+          setUsers(response.data);
+          setIsLoading(false);
+
+          await AsyncStorage.setItem('users', JSON.stringify(response.data));
+        } else {
+          const users = await AsyncStorage.getItem('users');
+          setUsers(JSON.parse(users));
+          setIsLoading(false);
+        }
       } catch (error) {
-        console.log(error)
+        console.log(error);
+        setIsLoading(false);
       }
     }
 
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const getNoOfFarmers = async (username) => {
     try {
       if (username) {
-        const res = await axios.get(`${URL}admin/${username}/farmer`)
-        return res.data.length
+        const res = await axios.get(`${URL}admin/${username}/farmer`);
+        return res.data.length;
       }
-      return 0
+      return 0;
     } catch (error) {
-      console.log(error)
-      return 0
+      console.log(error);
+      return 0;
     }
   }
 
   useEffect(() => {
     const fetchFarmersCount = async () => {
       try {
-        const counts = {}
-        for (const user of users) {
-          const count = await getNoOfFarmers(user.username)
-          counts[user.username] = count
+        if (await checkConnection()) {
+          const counts = {};
+          for (const user of users) {
+            const count = await getNoOfFarmers(user.username);
+            counts[user.username] = count;
+          }
+          setFarmersCount(counts);
+          setIsLoading(false);
+
+          await AsyncStorage.setItem('farmersCount', JSON.stringify(counts));
+        } else {
+          const counts = await AsyncStorage.getItem('farmersCount');
+          setFarmersCount(JSON.parse(counts));
+          setIsLoading(false);
         }
-        setFarmersCount(counts)
       } catch (error) {
-        console.log(error)
+        console.log(error);
+        setIsLoading(false);
       }
     }
 
-    fetchFarmersCount()
-  }, [users])
+    fetchFarmersCount();
+  }, [users]);
 
   const handleUserClick = (username) => {
-    navigation.navigate('Features', { username })
+    navigation.navigate('Features', { username });
   }
 
   const renderUserItem = ({ item }) => (
@@ -83,21 +107,25 @@ const CollectionCenter =  ({ navigation }) => {
         </View>
       </View>
     </TouchableOpacity>
-  )
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Choose Collection Center</Text>
       <View style={styles.box}>
-        <FlatList
-          data={users}
-          renderItem={renderUserItem}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
-        />
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#059c11" />
+        ) : (
+          <FlatList
+            data={users}
+            renderItem={renderUserItem}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContainer}
+          />
+        )}
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -143,13 +171,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter',
     color: '#000',
   },
-   heading: {
+  heading: {
     fontSize: 27,
-    alignitems:'center',
+    alignitems: 'center',
     fontFamily: 'LeagueSB',
     color: '#059c11',
-    marginBottom: 20, 
+    marginBottom: 20,
   },
-})
+});
 
-export default CollectionCenter
+export default CollectionCenter;

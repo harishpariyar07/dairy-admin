@@ -5,19 +5,20 @@ import {
   Dimensions,
   Platform,
   TouchableOpacity,
-  FlatList,
-  RefreshControl
 } from 'react-native'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useNavigation } from '@react-navigation/native'
-import { Button, IconButton, MD3Colors, Searchbar } from 'react-native-paper'
-import {  Row } from 'react-native-table-component'
+import { Button, IconButton, MD3Colors, Searchbar, Modal, Portal } from 'react-native-paper'
+import { Row } from 'react-native-table-component'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import HideWithKeyboard from 'react-native-hide-with-keyboard'
 import { SafeAreaView } from 'react-native'
 import URL from '../constants/ServerUrl'
 import axios from 'axios'
 import { FlashList } from "@shopify/flash-list";
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useFocusEffect } from '@react-navigation/native'
+import CollectionOfflineModal from '../components/CollectionOfflineModal'
 
 const windowWidth = Dimensions.get('window').width
 
@@ -36,6 +37,9 @@ const CollectMilk = ({ route }) => {
   const [totalMilk, setTotalMilk] = useState(0)
   const [avgFat, setAvgFat] = useState(0)
   const [avgSNF, setAvgSNF] = useState(0)
+  const [collectionsOffline, setCollectionsOffline] = useState([])
+  const [visible, setVisible] = useState(false);
+
 
   const tableHead = useMemo(() => [
     { label: '#', width: 0.1 * windowWidth },
@@ -46,9 +50,9 @@ const CollectMilk = ({ route }) => {
     { label: 'Snf', width: 0.1 * windowWidth },
     { label: 'Amt', width: 0.2 * windowWidth },
   ], []);
-  
+
   const tableHeadWidthArr = useMemo(() => tableHead.map((header) => header.width), [tableHead]);
-  
+
   const fetchCollections = async () => {
     try {
       if (username) {
@@ -71,12 +75,34 @@ const CollectMilk = ({ route }) => {
     }
   }
 
-  // refresh control
-  const [refreshing, setRefreshing] = useState(false)
+  const getOfflineCollections = async () => {
+    try {
+
+      const collectionOffline = await AsyncStorage.getItem(`collection-${username}`)
+
+      if (collectionOffline) {
+        const collections = JSON.parse(collectionOffline)
+        setCollectionsOffline(collections)
+      }
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
 
   useEffect(() => {
     fetchCollections()
+    getOfflineCollections()
   }, [date, selectedOption])
+
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCollections()
+      getOfflineCollections()
+    }, [date, selectedOption])
+  )
 
   const showPicker = () => {
     setIsPickerShow(true)
@@ -101,10 +127,9 @@ const CollectMilk = ({ route }) => {
     })
   }
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchCollections().then(() => setRefreshing(false));
-  };
+  const showModal = () => setVisible(true);
+  const hideModal = () => setVisible(false);
+
 
   const Item = ({ farmerName, farmerId, qty, rate, fat, snf, amount, id }) => (
     <View style={styles.item}>
@@ -143,6 +168,25 @@ const CollectMilk = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+
+      <Portal>
+        <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={{
+          backgroundColor: 'white',
+          padding: 20,
+          margin: 20,
+          borderRadius: 10
+        }}>
+
+          <CollectionOfflineModal
+            collectionsOffline={collectionsOffline}
+            hideModal={hideModal}
+            username={username}
+          />
+
+        </Modal>
+      </Portal>
+
+
       <View style={styles.container1}>
         <Searchbar
           placeholder='Search by name'
@@ -152,6 +196,24 @@ const CollectMilk = ({ route }) => {
           value={search}
           style={styles.searchBar}
         />
+
+        <View style={styles.cloud}>
+          <IconButton
+            icon='cloud-upload'
+            iconColor={'white'}
+            size={20}
+            onPress={() => {
+              showModal()
+            }}
+          />
+          <Text
+            style={styles.countText}
+          >
+            {collectionsOffline.length}
+          </Text>
+        </View>
+
+
       </View>
 
       <View style={styles.upperContainer}>
@@ -191,7 +253,7 @@ const CollectMilk = ({ route }) => {
             }}
           >
             <IconButton
-              icon='weather-sunny' // Choose an appropriate icon name
+              icon='weather-sunny'
               iconColor={'white'}
               onPress={() => setSelectedOption('Morning')}
             />
@@ -203,7 +265,7 @@ const CollectMilk = ({ route }) => {
             onPress={() => setSelectedOption('Evening')}
           >
             <IconButton
-              icon='weather-night' // Choose an appropriate icon name
+              icon='weather-night'
               iconColor={'white'}
               onPress={() => setSelectedOption('Evening')}
             />
@@ -212,20 +274,20 @@ const CollectMilk = ({ route }) => {
         </View>
       </View>
 
-      <View style={{flexDirection:'row', width: '100%', justifyContent: 'space-around'}}>
-        <View style={{flexDirection:'column', alignItems: 'center'}}>
+      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
+        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
           <Text>Total Milk</Text>
           <Text>{totalMilk}</Text>
         </View>
-        <View style={{flexDirection:'column', alignItems: 'center'}}>
+        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
           <Text>Avg Fat</Text>
           <Text>{avgFat}</Text>
         </View>
-        <View style={{flexDirection:'column', alignItems: 'center'}}> 
+        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
           <Text>Avg SNF</Text>
           <Text>{avgSNF}</Text>
         </View>
-      </View> 
+      </View>
 
       <View style={styles.container2}>
         <Row
@@ -242,55 +304,55 @@ const CollectMilk = ({ route }) => {
           </View>
         )
 
-        : tableData.length === 0 ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ fontSize: 20 }}>No Collections Found</Text>
-          </View>
-        ) : (
-          // <FlatList
-          //   data={tableData.filter(({ farmerName }) =>
-          //     farmerName.toLowerCase().startsWith(search.toLowerCase())
-          //   )}
-          //   refreshControl={
-          //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          //   }
-          //   renderItem={({ item }) => (
-          //     <Item
-          //       farmerId={item.farmerId}
-          //       farmerName={item.farmerName}
-          //       qty={item.qty}
-          //       fat={item.fat}
-          //       snf={item.snf}
-          //       amount={item.amount}
-          //       id={item._id}
-          //       rate={item.rate}
-          //     />
-          //   )}
-          //   keyExtractor={(item) => item._id}
-          //   initialNumToRender={10}
-          //   windowSize={21}
-          //   removeClippedSubviews={true}
-          // />
+          : tableData.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 20 }}>No Collections Found</Text>
+            </View>
+          ) : (
+            // <FlatList
+            //   data={tableData.filter(({ farmerName }) =>
+            //     farmerName.toLowerCase().startsWith(search.toLowerCase())
+            //   )}
+            //   refreshControl={
+            //     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            //   }
+            //   renderItem={({ item }) => (
+            //     <Item
+            //       farmerId={item.farmerId}
+            //       farmerName={item.farmerName}
+            //       qty={item.qty}
+            //       fat={item.fat}
+            //       snf={item.snf}
+            //       amount={item.amount}
+            //       id={item._id}
+            //       rate={item.rate}
+            //     />
+            //   )}
+            //   keyExtractor={(item) => item._id}
+            //   initialNumToRender={10}
+            //   windowSize={21}
+            //   removeClippedSubviews={true}
+            // />
 
-          <FlashList
-            data={tableData.filter(({ farmerName }) =>
-              farmerName.toLowerCase().startsWith(search.toLowerCase())
-            )}
-            renderItem={({ item }) => (
-              <Item
-                farmerId={item.farmerId}
-                farmerName={item.farmerName}
-                qty={item.qty}
-                fat={item.fat}
-                snf={item.snf}
-                amount={item.amount}
-                id={item._id}
-                rate={item.rate}
-              />
-            )}
-            estimatedItemSize={69}
-        />
-        )}
+            <FlashList
+              data={tableData.filter(({ farmerName }) =>
+                farmerName.toLowerCase().startsWith(search.toLowerCase())
+              )}
+              renderItem={({ item }) => (
+                <Item
+                  farmerId={item.farmerId}
+                  farmerName={item.farmerName}
+                  qty={item.qty}
+                  fat={item.fat}
+                  snf={item.snf}
+                  amount={item.amount}
+                  id={item._id}
+                  rate={item.rate}
+                />
+              )}
+              estimatedItemSize={69}
+            />
+          )}
       </View>
 
       <HideWithKeyboard style={styles.container3}>
@@ -380,7 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchBar: {
-    width: '90%',
+    width: '87%',
     backgroundColor: '#fff',
     borderColor: '#edebeb',
     borderWidth: 2,
@@ -389,6 +451,9 @@ const styles = StyleSheet.create({
     width: '100%',
     margin: 10,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
   container3: {
     flex: 1,
@@ -414,6 +479,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
+
+  countText: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: MD3Colors.error50,
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    padding: 2
+  },
+  cloud: {
+    backgroundColor: '#77b300',
+    borderRadius: 30,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 })
 
 export default CollectMilk

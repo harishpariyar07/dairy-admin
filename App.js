@@ -33,7 +33,7 @@ import MilkReport from './screens/MilkReport';
 import CollectionReport from './screens/CollectionReport';
 import ForgotPassword from './screens/ForgotPassword';
 import EditPayment from './screens/EditPayment';
-import SplashScreen from './screens/SplashScreen'; // Your SplashScreen component
+import SplashScreen from './screens/SplashScreen';
 import { useEffect, useState } from 'react';
 
 
@@ -115,9 +115,6 @@ export default function App() {
     LeagueSB: require('./assets/fonts/LeagueSpartan-Bold.ttf')
   });
 
-  // if (!loaded) {
-  //   return null;
-  // }
 
     const [showSplash, setShowSplash] = useState(true);
 

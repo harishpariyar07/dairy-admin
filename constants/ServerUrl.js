@@ -1,2 +1,2 @@
-const URL = "https://dairy-api.onrender.com/api/"
+const URL = "https://busy-top-coat-bear.cyclic.app/api/"
 module.exports = URL
