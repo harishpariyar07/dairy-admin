@@ -10,7 +10,9 @@ import { useState } from 'react'
 const CollectionOfflineModal = ({
     collectionsOffline,
     hideModal,
-    username
+    username,
+    setCollectionsOffline,
+    fetchCollections
 }) => {
 
     const [isLoading, setIsLoading] = useState(false)
@@ -29,7 +31,9 @@ const CollectionOfflineModal = ({
                 }
             })
 
-            await AsyncStorage.removeItem('collectionsOffline')
+            await AsyncStorage.removeItem(`collection-${username}`)
+            setCollectionsOffline([])
+            fetchCollections()
 
             hideModal()
 

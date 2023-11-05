@@ -31,7 +31,7 @@ const AddCollection = ({ route }) => {
       try {
         if (username) {
 
-          if (await checkConnection()) {
+          if (!(await checkConnection())) {
             const farmers = await axios.get(`${URL}admin/${username}/farmer`)
             const farmersArray = farmers.data.map((farmer) => ({
               farmerName: farmer.farmerName,
@@ -70,7 +70,7 @@ const AddCollection = ({ route }) => {
   const addCollection = async (farmerLevel, farmerId, farmerName, fixedRate, fat, snf) => {
     try {
 
-      if (!await checkConnection()) {
+      if (!(await checkConnection())) {
         if (username && qty !== null) {
           setIsLoading(true)
           const rateResponse = await axios.get(
@@ -148,7 +148,8 @@ const AddCollection = ({ route }) => {
             await AsyncStorage.setItem(`collection-${username}`, JSON.stringify([dataToPost]))
           }
           const check = await AsyncStorage.getItem(`collection-${username}`)
-          console.log(check)
+          // console.log(check)
+          alert('Collection Added Offline')
         }
         
       }

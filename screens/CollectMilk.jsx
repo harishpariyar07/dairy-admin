@@ -181,6 +181,8 @@ const CollectMilk = ({ route }) => {
             collectionsOffline={collectionsOffline}
             hideModal={hideModal}
             username={username}
+            setCollectionsOffline={setCollectionsOffline}
+            fetchCollections={fetchCollections}
           />
 
         </Modal>
